@@ -1,0 +1,8 @@
+policy_head:
+  arch: MLP
+  dims: [256, 128]
+  activation: relu
+calibration:
+  method: temperature
+targets:
+  ece_max: 0.05

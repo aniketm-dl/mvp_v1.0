@@ -1,0 +1,22 @@
+{
+  "simulate_min": {
+    "cta_seq": [{
+      "user_id":"u1",
+      "session_id":"s1",
+      "ts":"2025-06-01T12:00:00",
+      "context":{"page_type":"search","category":"sunscreen","price_mean":820,"visible_products":["A1","A2","A3"]},
+      "task":"choose_product",
+      "action_id":"A2"
+    }],
+    "task": "choose_product",
+    "scenarios": [
+      {"variant_id":"base","context_overrides":{}},
+      {"variant_id":"promo","context_overrides":{"promo_badge":true}},
+      {"variant_id":"cheap","context_overrides":{"price_mean":780}}
+    ],
+    "topk": 5,
+    "explain": "blend",
+    "deterministic": true,
+    "seed": 17
+  }
+}

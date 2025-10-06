@@ -1,0 +1,3 @@
+admin:
+  token: "changeme"           # send as header: X-Admin-Token
+  pin_store_path: "DATA/pins.json"

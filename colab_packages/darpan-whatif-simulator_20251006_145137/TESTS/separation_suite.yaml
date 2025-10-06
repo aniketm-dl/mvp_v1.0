@@ -1,0 +1,8 @@
+thresholds:
+  silhouette: 0.35
+  mean_jsd: 0.10
+  ari_stability: 0.80
+checks:
+  - embeddings_silhouette
+  - policy_distribution_jsd
+  - clustering_ari_across_seeds

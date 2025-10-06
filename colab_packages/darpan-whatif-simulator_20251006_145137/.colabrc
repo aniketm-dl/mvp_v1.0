@@ -1,0 +1,43 @@
+# Google Colab Configuration
+# This file helps Colab detect project structure
+
+[project]
+name = "darpan-whatif-simulator"
+version = "0.1.0"
+
+[colab]
+# Directories to include when packaging
+include = [
+    "src/",
+    "scripts/",
+    "DATA/",
+    "CONFIGS/",
+    "DOCS/",
+    "API/",
+    "PROMPTS/",
+    "notebooks/"
+]
+
+# Directories to exclude
+exclude = [
+    "artifacts/llm_adapters/",
+    "venv/",
+    ".venv/",
+    "__pycache__/",
+    "*.pyc",
+    ".git/",
+    "node_modules/",
+    "colab_packages/"
+]
+
+[training]
+base_model = "meta-llama/Llama-2-7b-chat-hf"
+epochs = 1
+batch_size = 2
+learning_rate = 2e-4
+max_length = 512
+
+[gpu]
+# Preferred GPU types (in order)
+preferred = ["A100", "V100", "T4"]
+min_memory_gb = 16

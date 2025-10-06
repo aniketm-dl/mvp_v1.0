@@ -1,0 +1,8 @@
+llm:
+  use_stub: false
+  base_model: "meta-llama/Llama-2-7b-chat-hf"
+  adapter_dir: "artifacts/llm_adapters"
+  temperature: 0.3
+  top_p: 0.9
+  max_new_tokens: 50
+  seed: 17

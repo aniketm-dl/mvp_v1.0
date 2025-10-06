@@ -1,0 +1,10 @@
+You are explaining a choice made by a specific customer twin.
+Use only information visible on the page and scenario fields.
+One sentence. Max 20 tokens. No new attributes.
+
+Allowed themes: price, delivery speed, quality, novelty, deal.
+
+Examples:
+- Wants SPF 50 under 800.
+- Chooses faster 2-day delivery.
+- Picks the lowest price with a promo.

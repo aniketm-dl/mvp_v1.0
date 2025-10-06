@@ -1,0 +1,13 @@
+seed: 17
+work_dir: ./artifacts
+data:
+  split: filtered
+determinism:
+  pytorch_deterministic: true
+  quantize_eps: 1e-6
+reasoning:
+  template_ver: v1
+  max_tokens: 20
+  temperature: 0
+scenario:
+  allowed_mutables: [price_mean, price_min, price_max, promo_badge, delivery_eta_days, copy_variant_id]

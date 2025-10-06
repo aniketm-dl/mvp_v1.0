@@ -1,0 +1,15 @@
+scenarios:
+  - id: base
+    overrides: {}
+  - id: promo
+    overrides: { promo_badge: true }
+    expect_direction:
+      deal_seekers: increase
+  - id: cheaper
+    overrides: { price_mean: -20% }   # interpret relative change at load time
+    expect_direction:
+      price_sensitive: increase
+  - id: faster
+    overrides: { delivery_eta_days: 2 }
+    expect_direction:
+      speed_first: increase

@@ -1,0 +1,56 @@
+# Python cache and builds
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Environments and tools
+env/
+venv/
+.venv/
+.conda/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+htmlcov/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.env
+.env.*
+
+# Data, models, outputs
+data/
+datasets/
+data_raw/
+models/
+checkpoints/
+outputs/
+logs/
+cache/
+.cache/
+
+# Common ML artifacts
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.h5
+*.onnx
+*.tar
+*.tar.gz
+*.zip
+*.gz

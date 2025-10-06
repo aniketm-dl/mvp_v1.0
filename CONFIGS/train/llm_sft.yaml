@@ -1,0 +1,4 @@
+base_model: "local-3b"
+conditioning: "archetype_id"
+max_reason_tokens: 20
+vocab_buckets: ["price","quality","speed","novelty","deal"]
