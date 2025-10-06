@@ -62,7 +62,7 @@ def main():
     print(f"📚 Found {len(personas)} personas to train\n")
 
     # Training parameters
-    base_model = "meta-llama/Llama-2-7b-chat-hf"
+    base_model = "mistralai/Mistral-7B-Instruct-v0.2"
     epochs = 1
 
     print(f"⚙️  Training Configuration:")
@@ -71,7 +71,7 @@ def main():
     print(f"   • LoRA rank: 8")
     print(f"   • Learning rate: 2e-4")
     print(f"   • Max length: 512")
-    print(f"\n⚠️  Note: Training Llama-2-7b requires significant memory (16GB+ GPU recommended)\n")
+    print(f"\n⚠️  Note: Training Mistral-7B requires significant memory (16GB+ GPU recommended)\n")
 
     # Train each twin
     start_time = time.time()

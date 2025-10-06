@@ -21,8 +21,8 @@ def ensure_text(ex):
 def find_targets(model):
     # GPT-2 style layers
     gpt2_want=("c_attn","c_fc","c_proj")
-    # Llama/Mistral style layers
-    llama_want=("q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj")
+    # Mistral/Llama style layers
+    mistral_want=("q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj")
 
     allow=(torch.nn.Linear, Conv1D, torch.nn.Conv1d)
     names=set()
@@ -31,16 +31,16 @@ def find_targets(model):
     for n,m in model.named_modules():
         if isinstance(m,allow):
             layer_name = n.split(".")[-1]
-            if layer_name in gpt2_want or layer_name in llama_want:
+            if layer_name in gpt2_want or layer_name in mistral_want:
                 names.add(layer_name)
 
     # Return found layers or sensible defaults
     if names:
         return sorted(names)
 
-    # Default to GPT-2 or Llama based on model type
+    # Default to GPT-2 or Mistral based on model type
     model_name = model.config.model_type if hasattr(model, 'config') else ""
-    if "llama" in model_name.lower() or "mistral" in model_name.lower():
+    if "mistral" in model_name.lower() or "llama" in model_name.lower():
         return ["q_proj", "v_proj"]  # Minimal but effective
     return ["c_attn","c_fc","c_proj"]
 

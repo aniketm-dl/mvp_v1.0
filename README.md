@@ -13,15 +13,20 @@ You will build a deterministic what-if simulator that answers: what happens if w
 
 ### Training Real LLM Personas
 
+**🎯 Recommended: Mistral-7B-Instruct-v0.2** (no gated access!)
+
 **Option A: Google Colab (Recommended - needs GPU)**
-- See: **[DOCS/COLAB_QUICKSTART.md](DOCS/COLAB_QUICKSTART.md)** for 5-step guide
-- See: **[DOCS/COLAB_WORKFLOW.md](DOCS/COLAB_WORKFLOW.md)** for detailed workflow
+- See: **[DOCS/MISTRAL_QUICKSTART.md](DOCS/MISTRAL_QUICKSTART.md)** for 5-step guide
+- Model: **Mistral-7B-Instruct-v0.2** (instant access, better performance)
+- GitHub: https://github.com/aniketm-dl/mvp_v1.0
 - Use Colab Pro for GPU training (2-4 hours for 18 personas)
 - Use Claude Code for local development and testing
+- Notebook: `notebooks/train_mistral_on_colab.ipynb`
 
 **Option B: Local Training (requires 16GB+ GPU)**
 - `python scripts/train_all_adapters.py`
 - Time: 10-20 hours on CPU, 3-4 hours on T4 GPU
+- Default model: Mistral-7B-Instruct-v0.2
 
 ### Interactive Chat with Personas
 ```bash

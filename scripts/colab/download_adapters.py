@@ -103,9 +103,16 @@ def main():
         if current_stub:
             print(f"\n💡 Tip: Set 'use_stub: false' in {config_path} to use the new adapters")
 
-        if "llama" not in current_model.lower():
-            print(f"⚠️  Warning: Current base_model doesn't match trained adapters (Llama-2)")
-            print(f"   Update base_model to 'meta-llama/Llama-2-7b-chat-hf' in {config_path}")
+        # Check if model matches expected (Mistral or Llama)
+        expected_mistral = "mistralai/Mistral-7B-Instruct-v0.2"
+        expected_llama = "meta-llama/Llama-2-7b-chat-hf"
+
+        if "mistral" not in current_model.lower() and "llama" not in current_model.lower():
+            print(f"⚠️  Warning: Current base_model may not match trained adapters")
+            print(f"   Expected: {expected_mistral} (recommended)")
+            print(f"   Or: {expected_llama}")
+            print(f"   Current: {current_model}")
+            print(f"   Update base_model in {config_path} if needed")
 
     print(f"\n🚀 Ready to use! Run: python interact_cli.py")
     return 0
