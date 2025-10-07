@@ -61,9 +61,10 @@ python scripts/colab/package_for_colab.py
 **Critical cells:**
 - Cell 5: Paste your HuggingFace token
 - Cell 6: Verify Mistral access (should work immediately!)
-- Cell 8: Test with 1 persona first (~10 min)
-- Cell 10: Train all 18 personas (~2-4 hours)
-- Cell 13: Saves adapters to Google Drive
+- **Cell 7: AUTO DATA GENERATION** ⚡ NEW! (first time: 5-10 min, subsequent: 30 sec)
+- Cell 9: Test with 1 persona first (~10 min)
+- Cell 11: Train all 18 personas (~2-4 hours)
+- Cell 14: Saves adapters to Google Drive
 
 ---
 
@@ -154,9 +155,11 @@ python interact_cli.py
 
 ## Pro Tips
 
-✅ **Use GitHub clone option** in Colab (faster than Drive upload)
+✅ **Use new notebook with auto DATA generation:** `train_mistral_on_colab_with_data.ipynb`
 
-✅ **Always test with 1 persona first** (Cell 8) before training all 18
+✅ **DATA persists in Drive:** First run takes 5-10 min, future runs load in 30 sec!
+
+✅ **Always test with 1 persona first** (Cell 9) before training all 18
 
 ✅ **Keep browser tab open** during training (or enable background execution in Colab Pro)
 

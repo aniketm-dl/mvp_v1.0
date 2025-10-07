@@ -1,5 +1,0 @@
-serve:
-  use_heads: true
-  head_dir: artifacts/policy_heads
-  candidate_hash_buckets: 16
-  calib_default_temp: 1.0

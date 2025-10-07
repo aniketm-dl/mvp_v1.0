@@ -1,5 +1,0 @@
-runs: 3
-seed: 17
-assertions:
-  - byte_equal: true
-  - reasons_identical: true
