@@ -80,8 +80,24 @@ def main():
     out = Path(f"artifacts/llm_adapters/{a.twin_id}")
     out.mkdir(parents=True, exist_ok=True)
 
-    args = TrainingArguments(output_dir=str(out), learning_rate=a.lr, num_train_epochs=a.epochs,
-                             per_device_train_batch_size=2, logging_steps=50, save_strategy="no", report_to=[])
+    # Check GPU availability
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
+    if device == "cuda":
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB")
+
+    args = TrainingArguments(
+        output_dir=str(out),
+        learning_rate=a.lr,
+        num_train_epochs=a.epochs,
+        per_device_train_batch_size=2,
+        logging_steps=50,
+        save_strategy="no",
+        report_to=[],
+        fp16=torch.cuda.is_available(),  # Enable mixed precision on GPU
+        no_cuda=False,  # Force GPU use if available
+    )
     collator = DataCollatorForLanguageModeling(tokenizer=tok, mlm=False)
 
     Trainer(model=model, args=args, train_dataset=ds_tok, data_collator=collator).train()
