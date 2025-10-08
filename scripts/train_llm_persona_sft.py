@@ -87,12 +87,16 @@ def main():
     )
     model.resize_token_embeddings(len(tok))
 
+    # Enable gradient checkpointing to save memory during training
+    # Trades computation for memory - essential for large models on limited VRAM
+    model.gradient_checkpointing_enable()
+    model.config.use_cache = False  # Required for gradient checkpointing
+
     # Apply LoRA for parameter-efficient fine-tuning
     targets = find_targets(model)
     lora=LoraConfig(task_type=TaskType.CAUSAL_LM, r=8, lora_alpha=16, lora_dropout=0.05,
                     target_modules=targets, bias="none")
     model = get_peft_model(model, lora)
-    model.config.use_cache = False  # Required for gradient checkpointing with PEFT
 
     out = Path(f"artifacts/llm_adapters/{a.twin_id}")
     out.mkdir(parents=True, exist_ok=True)
@@ -101,13 +105,14 @@ def main():
         output_dir=str(out),
         learning_rate=a.lr,
         num_train_epochs=a.epochs,
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=4,  # Effective batch size = 2*4 = 8
+        per_device_train_batch_size=1,  # Reduced from 2 to save memory
+        gradient_accumulation_steps=8,  # Increased to maintain effective batch size of 8
         logging_steps=50,
         save_strategy="no",
         report_to=[],
         fp16=True,  # Enable fp16 training
         no_cuda=False,
+        gradient_checkpointing=True,  # Enable gradient checkpointing
     )
     collator = DataCollatorForLanguageModeling(tokenizer=tok, mlm=False)
 
