@@ -79,9 +79,11 @@ def main():
 
     # Load model in fp16 for efficient GPU training
     # Mistral-7B in fp16 = ~14GB, fits in 15GB T4 GPU
+    # device_map={"": 0} forces all layers to GPU 0, avoiding meta device issues
     model = AutoModelForCausalLM.from_pretrained(
         a.base_model,
         torch_dtype=torch.float16,  # Load in fp16 to save memory
+        device_map={"": 0} if torch.cuda.is_available() else None,  # Force to GPU 0
     )
     model.resize_token_embeddings(len(tok))
 
@@ -108,6 +110,12 @@ def main():
         no_cuda=False,
     )
     collator = DataCollatorForLanguageModeling(tokenizer=tok, mlm=False)
+
+    # Print trainable parameters
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"\nTrainable params: {trainable_params:,} / Total params: {total_params:,}")
+    print(f"Trainable %: {100 * trainable_params / total_params:.2f}%\n")
 
     Trainer(model=model, args=args, train_dataset=ds_tok, data_collator=collator).train()
     model.save_pretrained(out)      # this writes a proper adapter_config.json (with peft_type)
