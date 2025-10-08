@@ -70,37 +70,44 @@ def main():
 
     ds_tok = ds.map(tokf, batched=True, remove_columns=ds.column_names)
 
-    model = AutoModelForCausalLM.from_pretrained(
-        a.base_model,
-        device_map="auto",  # Automatically use GPU if available
-        torch_dtype=torch.float16,  # Load in fp16 to save memory
-    )
-    model.resize_token_embeddings(len(tok))
-    targets = find_targets(model)
-    lora=LoraConfig(task_type=TaskType.CAUSAL_LM, r=8, lora_alpha=16, lora_dropout=0.05,
-                    target_modules=targets, bias="none")
-    model = get_peft_model(model, lora)
-
-    out = Path(f"artifacts/llm_adapters/{a.twin_id}")
-    out.mkdir(parents=True, exist_ok=True)
-
-    # Check GPU availability
+    # Check GPU availability first
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
     if device == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB")
 
+    # Load model with 8-bit quantization for efficient GPU training
+    # This automatically handles device placement and is compatible with PEFT
+    model = AutoModelForCausalLM.from_pretrained(
+        a.base_model,
+        load_in_8bit=True,  # 8-bit quantization - fits 7B model in ~7GB VRAM
+        device_map="auto",  # Auto device placement
+        torch_dtype=torch.float16,
+    )
+    model.resize_token_embeddings(len(tok))
+
+    # Apply LoRA for parameter-efficient fine-tuning
+    targets = find_targets(model)
+    lora=LoraConfig(task_type=TaskType.CAUSAL_LM, r=8, lora_alpha=16, lora_dropout=0.05,
+                    target_modules=targets, bias="none")
+    model = get_peft_model(model, lora)
+    model.config.use_cache = False  # Required for gradient checkpointing with PEFT
+
+    out = Path(f"artifacts/llm_adapters/{a.twin_id}")
+    out.mkdir(parents=True, exist_ok=True)
+
     args = TrainingArguments(
         output_dir=str(out),
         learning_rate=a.lr,
         num_train_epochs=a.epochs,
         per_device_train_batch_size=2,
+        gradient_accumulation_steps=4,  # Effective batch size = 2*4 = 8
         logging_steps=50,
         save_strategy="no",
         report_to=[],
-        fp16=torch.cuda.is_available(),  # Enable mixed precision on GPU
-        no_cuda=False,  # Force GPU use if available
+        fp16=False,  # Disabled - using 8-bit instead
+        no_cuda=False,
     )
     collator = DataCollatorForLanguageModeling(tokenizer=tok, mlm=False)
 
