@@ -70,7 +70,11 @@ def main():
 
     ds_tok = ds.map(tokf, batched=True, remove_columns=ds.column_names)
 
-    model = AutoModelForCausalLM.from_pretrained(a.base_model)
+    model = AutoModelForCausalLM.from_pretrained(
+        a.base_model,
+        device_map="auto",  # Automatically use GPU if available
+        torch_dtype=torch.float16,  # Load in fp16 to save memory
+    )
     model.resize_token_embeddings(len(tok))
     targets = find_targets(model)
     lora=LoraConfig(task_type=TaskType.CAUSAL_LM, r=8, lora_alpha=16, lora_dropout=0.05,
