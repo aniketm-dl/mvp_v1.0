@@ -77,13 +77,11 @@ def main():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB")
 
-    # Load model with 8-bit quantization for efficient GPU training
-    # This automatically handles device placement and is compatible with PEFT
+    # Load model in fp16 for efficient GPU training
+    # Mistral-7B in fp16 = ~14GB, fits in 15GB T4 GPU
     model = AutoModelForCausalLM.from_pretrained(
         a.base_model,
-        load_in_8bit=True,  # 8-bit quantization - fits 7B model in ~7GB VRAM
-        device_map="auto",  # Auto device placement
-        torch_dtype=torch.float16,
+        torch_dtype=torch.float16,  # Load in fp16 to save memory
     )
     model.resize_token_embeddings(len(tok))
 
@@ -106,7 +104,7 @@ def main():
         logging_steps=50,
         save_strategy="no",
         report_to=[],
-        fp16=False,  # Disabled - using 8-bit instead
+        fp16=True,  # Enable fp16 training
         no_cuda=False,
     )
     collator = DataCollatorForLanguageModeling(tokenizer=tok, mlm=False)
