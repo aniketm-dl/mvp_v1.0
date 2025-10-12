@@ -65,7 +65,9 @@
       "Bash(echo \"❌ $twin\")",
       "Bash(do if [ -f \"artifacts/llm_adapters/$twin/adapter_model.safetensors\" ])",
       "Bash(then echo \"✅ $twin\" else echo \"⏳ $twin\" fi done)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(__NEW_LINE__ echo \"=== API directory ===\")",
+      "Bash(__NEW_LINE__ echo \"\")"
     ],
     "deny": [],
     "ask": []
