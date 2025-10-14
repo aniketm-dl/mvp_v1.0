@@ -57,3 +57,12 @@ colab_packages/
 *.tar.gz
 *.zip
 *.gz
+# Darpan workflow state
+.darpan_workflow_state.json
+
+# Environment
+.env
+
+# AWS credentials (safety)
+*.pem
+credentials.json
