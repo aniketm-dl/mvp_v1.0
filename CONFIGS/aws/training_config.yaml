@@ -1,0 +1,94 @@
+# AWS Training Configuration
+# This file controls training behavior for any number of personas
+
+# Training Settings
+training:
+  base_model: "mistralai/Mistral-7B-Instruct-v0.2"
+  epochs: 1
+  max_length: 512
+  learning_rate: 2e-4
+  batch_size: 1
+  gradient_accumulation_steps: 8
+
+  # LoRA Configuration
+  lora:
+    rank: 8
+    alpha: 16
+    dropout: 0.05
+    target_modules: auto  # auto-detect or specify: ["q_proj", "v_proj", "k_proj", "o_proj"]
+
+  # Data paths
+  personas_file: "DATA/personas.json"
+  training_data_dir: "DATA/sft"
+  output_dir: "artifacts/llm_adapters"
+
+# AWS Configuration
+aws:
+  # S3 Settings
+  s3:
+    enabled: true
+    bucket: null  # Will prompt if not set
+    prefix: "darpan_training"
+    sync_frequency: "per_twin"  # per_twin, per_batch, end_only
+
+  # Instance Settings
+  instance:
+    auto_shutdown: false
+    shutdown_delay_minutes: 5
+
+  # Monitoring
+  monitoring:
+    cloudwatch_enabled: false
+    log_group_name: "/darpan/training"
+    metrics_enabled: true
+
+# Parallelization (for multi-GPU or distributed training)
+parallelization:
+  enabled: false
+  strategy: "multi_gpu"  # multi_gpu, distributed, sequential
+  num_workers: 1
+  twins_per_gpu: 1
+
+# Resume & Checkpointing
+resume:
+  enabled: true
+  skip_completed: true
+  checkpoint_frequency: "per_twin"  # per_twin, per_epoch, per_batch
+
+# Error Handling
+error_handling:
+  max_retries: 3
+  retry_delay_seconds: 60
+  fail_fast: false  # Stop all training if one twin fails
+  save_failed_log: true
+
+# Validation
+validation:
+  enabled: true
+  verify_adapter_size_mb: [10, 50]  # Min and max expected size
+  test_inference: true  # Try loading adapter after training
+
+# Reporting
+reporting:
+  save_report: true
+  report_format: "json"  # json, yaml, html
+  include_metrics: true
+  notify_on_complete: false  # Future: SNS/email notifications
+
+# Cost Management
+cost:
+  track_costs: true
+  cost_per_hour_spot:
+    "g4dn.xlarge": 0.18
+    "g4dn.2xlarge": 0.25
+    "g5.xlarge": 0.35
+    "g5.2xlarge": 0.50
+    "p3.2xlarge": 1.00
+  budget_alert_usd: null  # Set a budget alert
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  console_output: true
+  file_output: true
+  log_file: "artifacts/training.log"

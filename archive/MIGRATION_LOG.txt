@@ -1,0 +1,70 @@
+Darpan Labs - Migration Log
+============================
+
+Date: Sat Oct 11 22:04:06 IST 2025
+Migration script: migrate_to_new_structure.sh
+
+Files Archived:
+---------------
+CHANGELOG.md
+COLAB_CHECKLIST.md
+CONTRIBUTING.md
+DATA_SOLUTION_SUMMARY.md
+MIGRATION_TO_MISTRAL.md
+MISTRAL_SETUP_COMPLETE.md
+MVP_STATUS.md
+PERSONAS_SUMMARY.md
+TWIN_INTERACTION_GUIDE.md
+
+Docs Archived:
+--------------
+AWS_QUICK_START.md
+COLAB_QUICKSTART.md
+COLAB_WORKFLOW.md
+DATA_GENERATION_GUIDE.md
+DEPLOY.md
+MISTRAL_QUICKSTART.md
+MODEL_BENCHMARK_COMPARISON.md
+NON_TECH_SUMMARY.md
+OPERA_TO_SFT.md
+PERSONA_TRAINING.md
+PHASE_J_RUNBOOK.md
+PLAYGROUND.md
+QUICKSTART_MVP.md
+RUNBOOK_PHASE_G.md
+SETUP_COMPLETE.md
+SFT_DATA.md
+START_HERE.md
+TWIN_LAB.md
+
+New Structure:
+--------------
+docs/
+├── README.md
+├── AWS_SETUP.md
+├── TRAINING.md
+├── API.md
+└── ARCHITECTURE.md
+
+New Files:
+----------
+- darpan.py (Unified CLI)
+- Makefile (Enhanced)
+- src/datasets/ (Dataset abstraction)
+- .env.example
+- REFACTORING_SUMMARY.md
+
+Notes:
+------
+- Old README saved as: archive/README.old.md
+- All status/summary files in: archive/migration_files/
+- Old docs in: archive/old_docs/
+- Opera scripts unchanged (backward compatible)
+
+To rollback:
+------------
+$ mv archive/README.old.md README.md
+$ cp -r archive/old_docs/* DOCS/
+$ git checkout HEAD -- Makefile
+$ rm darpan.py src/datasets/*.py
+
