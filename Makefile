@@ -63,6 +63,27 @@ sync-code: ## Sync local code changes to EC2 instance (for rapid iteration)
 	  ./ ubuntu@$$EC2_IP:~/mvp_v1.0/
 	@echo "✅ Code synced to EC2"
 
+setup-remote: ## Setup EC2 instance (run setup script via SSH)
+	@echo "⚙️  Setting up EC2 instance..."
+	@read -p "Enter EC2 instance IP: " EC2_IP; \
+	KEY_FILE="$${DARPAN_SSH_KEY:-$$HOME/darpan-training.pem}"; \
+	echo "Creating directories..."; \
+	ssh -i $$KEY_FILE ubuntu@$$EC2_IP "mkdir -p ~/mvp_v1.0/artifacts/llm_adapters ~/mvp_v1.0/DATA"; \
+	echo "Running setup script (this takes ~10-15 minutes)..."; \
+	ssh -i $$KEY_FILE ubuntu@$$EC2_IP "cd ~/mvp_v1.0 && bash scripts/aws/setup_training_instance.sh"
+
+train-remote: ## Start training on EC2 instance (via SSH in tmux)
+	@echo "🚀 Starting training on EC2..."
+	@read -p "Enter EC2 instance IP: " EC2_IP; \
+	KEY_FILE="$${DARPAN_SSH_KEY:-$$HOME/darpan-training.pem}"; \
+	ssh -i $$KEY_FILE ubuntu@$$EC2_IP "cd ~/mvp_v1.0 && source venv/bin/activate && tmux new-session -d -s training './darpan.py train --auto-shutdown' && echo '✅ Training started in tmux session. To attach: ssh to EC2 and run: tmux attach -t training'"
+
+train-remote-status: ## Check training status on EC2
+	@echo "📊 Checking training status..."
+	@read -p "Enter EC2 instance IP: " EC2_IP; \
+	KEY_FILE="$${DARPAN_SSH_KEY:-$$HOME/darpan-training.pem}"; \
+	ssh -i $$KEY_FILE ubuntu@$$EC2_IP "cd ~/mvp_v1.0 && tail -20 training_output.log 2>/dev/null || echo 'No training log found'"
+
 ##@ Local Development
 
 serve: ## Start local API server
@@ -281,6 +302,7 @@ quickstart: ## Show quick start guide
 	@echo ""
 
 .PHONY: workflow workflow-status launch setup-instance train train-subset train-parallel download chat sync-code
+.PHONY: setup-remote train-remote train-remote-status
 .PHONY: serve serve-prod interact test test-verbose test-specific gate guard metrics all-checks
 .PHONY: lint fmt clean clean-models dataset-opera dataset-info personas-discover personas-list
 .PHONY: prep-sft-data prep-opera-sft train-local-all train-local-one eval-adapter
