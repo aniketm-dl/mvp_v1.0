@@ -220,6 +220,23 @@ report-confusion: ## Generate persona confusion matrix
 report-deltas: ## Generate scenario delta heatmap
 	python scripts/reports/scenario_delta_heatmap.py
 
+##@ Testing & Evaluation
+
+test-personas: ## Test persona response quality with new core logic
+	python examples/test_persona_responses.py
+
+test-decide: ## Run decide_then_verbalize example
+	python examples/run_decide_then_verbalize.py
+
+verify-models: ## Verify all 18 persona models are present
+	@echo "📦 Verifying persona models..."
+	@COUNT=$$(find artifacts/llm_adapters -name "adapter_model.safetensors" 2>/dev/null | wc -l | tr -d ' '); \
+	if [ $$COUNT -eq 18 ]; then \
+		echo "✅ All 18 persona models present"; \
+	else \
+		echo "⚠️  Found $$COUNT models (expected 18)"; \
+	fi
+
 ##@ Admin & Utilities
 
 pins: ## List all pinned twin configurations
@@ -263,10 +280,10 @@ quickstart: ## Show quick start guide
 	@echo "📚 More commands: make help"
 	@echo ""
 
-.PHONY: workflow workflow-status launch setup-instance train train-subset train-parallel download chat
+.PHONY: workflow workflow-status launch setup-instance train train-subset train-parallel download chat sync-code
 .PHONY: serve serve-prod interact test test-verbose test-specific gate guard metrics all-checks
 .PHONY: lint fmt clean clean-models dataset-opera dataset-info personas-discover personas-list
 .PHONY: prep-sft-data prep-opera-sft train-local-all train-local-one eval-adapter
 .PHONY: cost-status cost-alert s3-list s3-upload s3-download openapi docs-api
 .PHONY: docker-build docker-run docker-stop report-confusion report-deltas
-.PHONY: pins reload-all train-status quickstart
+.PHONY: test-personas test-decide verify-models pins reload-all train-status quickstart
