@@ -55,6 +55,9 @@ make help
 # Quick start guide
 make quickstart
 
+# Sync code to EC2 (for retraining)
+make sync-code
+
 # List personas
 make personas-list
 
@@ -179,6 +182,18 @@ After training:
 ./darpan.py status  # Where am I?
 make help           # What can I do?
 ```
+
+**Changed code and need to retrain?**
+```bash
+# Option A: Via GitHub
+git push && make launch
+# SSH, git pull, train
+
+# Option B: Direct sync (faster)
+make launch && make sync-code
+# SSH and train
+```
+📖 Full details: [docs/RETRAINING_WORKFLOW.md](docs/RETRAINING_WORKFLOW.md)
 
 ---
 

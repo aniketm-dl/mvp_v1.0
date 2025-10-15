@@ -209,6 +209,92 @@ make train-local-one TWIN=bargain_hunter
 
 ---
 
+## 🔄 Retraining After Code Changes
+
+**When you modify model files or training logic, you need to retrain.**
+
+### Quick Workflow
+
+```bash
+# 1. Commit your changes
+git add src/models/encoder.py scripts/train_llm_persona_sft.py
+git commit -m "Update training logic"
+git push
+
+# 2. Launch EC2 and sync code
+make launch
+# Note the instance IP
+
+# 3. SSH to instance
+ssh -i ~/darpan-training.pem ubuntu@<INSTANCE_IP>
+cd ~/mvp_v1.0
+git pull origin refactor/aws-workflow-automation
+source venv/bin/activate
+
+# 4. Retrain
+./darpan.py train --auto-shutdown
+
+# 5. Download (back on local machine)
+make download
+make test && make gate
+```
+
+### Faster: Direct Sync (Skip GitHub)
+
+```bash
+# 1. Launch instance
+make launch
+
+# 2. Sync local changes directly
+make sync-code
+# Enter instance IP when prompted
+
+# 3. SSH and train
+ssh -i ~/darpan-training.pem ubuntu@<INSTANCE_IP>
+cd ~/mvp_v1.0
+source venv/bin/activate
+./darpan.py train --auto-shutdown
+
+# 4. Download and verify
+make download
+make test
+```
+
+### What to Retrain Based on Changes
+
+| What You Changed | Steps Required |
+|------------------|----------------|
+| **Training hyperparameters** | Sync → Train → Download |
+| **Model architecture** | Sync → Clean old models → Train → Download → Test |
+| **Data preparation** | Prep data → Upload S3 → Train → Download |
+| **API/inference only** | No retraining needed! |
+
+### Test Subset First (Faster/Cheaper)
+
+```bash
+# Train only 3 personas for testing
+./darpan.py train --twins k0 k1 k2
+
+# If good, train all 18
+./darpan.py train --auto-shutdown
+```
+
+### Clean Old Models Before Retraining
+
+```bash
+# If you changed model architecture
+rm -rf artifacts/llm_adapters/*
+
+# Then retrain
+./darpan.py train
+```
+
+**💡 Pro Tip:** Always use `--auto-shutdown` to save money!
+
+**📖 Full Details:** See [docs/RETRAINING_WORKFLOW.md](docs/RETRAINING_WORKFLOW.md)
+
+---
+
 ## 💻 Local Development
 
 ### Start API Server
@@ -643,13 +729,19 @@ See [docs/API.md](docs/API.md) for full API reference.
    make workflow
    ```
 
-2. **Train again:**
+2. **Retrain after code changes:**
    ```bash
+   # Option A: Via GitHub
+   git add . && git commit -m "Update model" && git push
    make launch
-   # SSH to instance
-   make setup-instance
-   make train
-   # Back to local
+   # SSH to instance, git pull, then train
+
+   # Option B: Direct sync (faster)
+   make launch
+   make sync-code    # Sync local changes directly
+   # SSH to instance and train
+
+   # Then download
    make download
    ```
 

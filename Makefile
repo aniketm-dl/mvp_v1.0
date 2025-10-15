@@ -52,6 +52,17 @@ download: ## Download trained models from S3
 chat: ## Interactive chat with trained personas
 	./darpan.py chat
 
+sync-code: ## Sync local code changes to EC2 instance (for rapid iteration)
+	@echo "📤 Syncing local code to EC2..."
+	@read -p "Enter EC2 instance IP: " EC2_IP; \
+	KEY_FILE="$${DARPAN_SSH_KEY:-$$HOME/darpan-training.pem}"; \
+	rsync -avz --exclude 'venv' --exclude '__pycache__' --exclude '*.pyc' \
+	  --exclude '.git' --exclude 'artifacts' --exclude 'DATA' --exclude '*.egg-info' \
+	  --exclude '.pytest_cache' --exclude '.mypy_cache' --exclude '.ruff_cache' \
+	  -e "ssh -i $$KEY_FILE -o StrictHostKeyChecking=no" \
+	  ./ ubuntu@$$EC2_IP:~/mvp_v1.0/
+	@echo "✅ Code synced to EC2"
+
 ##@ Local Development
 
 serve: ## Start local API server
