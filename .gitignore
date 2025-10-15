@@ -66,3 +66,7 @@ colab_packages/
 # AWS credentials (safety)
 *.pem
 credentials.json
+
+# AWS credentials reference (NEVER COMMIT)
+.aws_credentials_reference.txt
+AWS_SETUP_COMPLETE.md

@@ -67,7 +67,19 @@
       "Bash(then echo \"✅ $twin\" else echo \"⏳ $twin\" fi done)",
       "Read(//tmp/**)",
       "Bash(__NEW_LINE__ echo \"=== API directory ===\")",
-      "Bash(__NEW_LINE__ echo \"\")"
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(/dev/null)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python scripts/personas/validate_personas.py)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/pip install:*)",
+      "Bash(PYTHONPATH=. /Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python -m pytest --collect-only data/opera/__tests__/)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python -c \"import sys; sys.path.insert(0, ''.''); from data.opera.schemas import OPeRAStep; print(''✓ Schemas import successfully'')\")",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python -m pytest TESTS/test_opera_parse_and_dataset.py::TestSchemas::test_opera_step_valid -v)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python src/data/opera/parse_opera.py --in DATA/OPeRA/raw --out DATA/OPeRA/processed --config CONFIGS/opera.yaml)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python scripts/parse_opera.py --in DATA/OPeRA/raw --out DATA/OPeRA/processed --config CONFIGS/opera.yaml)",
+      "Bash(cd /Users/aniketniranjanmishra/Desktop/Darpan\\ Labs/mvp_v1.0 && /Users/aniketniranjanmishra/Desktop/Darpan\\ Labs/mvp_v1.0/venv/bin/python:*)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/ruff check src/data/opera/ --select F,E,W,I --fix)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/ruff check src/data/opera/ --select F,E,W,I)",
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python -m pytest TESTS/test_encoder_shapes.py -v --tb=short)"
     ],
     "deny": [],
     "ask": []

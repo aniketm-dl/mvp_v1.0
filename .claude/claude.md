@@ -60,13 +60,57 @@ When creating test payloads for `/simulate`:
 - Top-level `task` must be: "choose_product" or "refine"
 - Required CTA fields: user_id, session_id, ts, action, task, action_id
 
-## Code Style
+## Code Style and House Rules
 
 ### Imports
 ```python
 from __future__ import annotations
 from typing import Dict, Any, List, Optional
 ```
+**Rule**: First import must always be `from __future__ import annotations`
+**Order**: future → stdlib → third-party → first-party → local
+
+### Comment Philosophy: WHY not WHAT
+**Keep comments that explain:**
+- Why a non-obvious approach was chosen
+- Business logic or domain constraints
+- Performance trade-offs
+- Workarounds for external API quirks
+
+**Remove comments that repeat code:**
+- ❌ `# Loop through items`
+- ❌ `# Initialize variable`
+- ❌ `# Return the result`
+- ❌ `# Create a dictionary`
+
+**Example of good comments:**
+```python
+# Quantize at feature boundary to maintain determinism across runs
+features = bucket_continuous(features, n=16)
+
+# Guard must run before caching to prevent storing invalid reasons
+if not guard.check(reason):
+    reason = fallback_reason(context)
+```
+
+### Configuration Over Code
+**Rule**: Model parameters MUST live in config files, never hardcoded
+
+**Bad** ❌:
+```python
+model = load_model("mistralai/Mistral-7B-Instruct-v0.2")
+learning_rate = 2e-4
+max_tokens = 512
+```
+
+**Good** ✅:
+```python
+model = load_model(config.model.base_model)
+learning_rate = config.training.learning_rate
+max_tokens = config.generation.max_tokens
+```
+
+**Exception**: Test files and scripts can use literals for readability
 
 ### Error Handling
 - Raise `HTTPException(status_code=422)` for validation errors
@@ -217,6 +261,43 @@ make test
 make gate
 ```
 
+## Systematic Debugging Loop
+
+When encountering bugs, test failures, or unexpected behavior, follow this loop:
+
+### 1. Enumerate Possible Causes
+- Extract error message, stack trace, and failure context
+- List 3-5 potential root causes ranked by likelihood
+- Consider: schema violations, missing guards, type mismatches, state issues, race conditions
+- Check recent changes that might have introduced the issue
+
+### 2. Add Strategic Logging
+- Add logging at function entry/exit points
+- Log inputs, intermediate state, and outputs with types
+- Add assertions for invariants (e.g., `assert temperature == 0`)
+- Use descriptive log messages: `logger.info(f"Twin {twin_id} chose {choice} from {len(candidates)} candidates")`
+
+### 3. Validate Hypotheses
+- Run tests or reproduce issue with enhanced logging
+- Analyze log output to confirm or rule out each hypothesis
+- Test one hypothesis at a time (change one variable)
+- Document findings: "Hypothesis X ruled out because log shows Y"
+
+### 4. Apply Minimal Fix
+- Implement the smallest change that fixes root cause
+- Ensure fix doesn't violate determinism, guard, or separation rules
+- Add regression test if not already covered
+- Verify fix with full test suite: `make test && make gate`
+
+### 5. Clean Up Debug Artifacts
+- Remove temporary debug logging (keep useful operational logs)
+- Remove debug print statements
+- Remove test data or fixtures used only for debugging
+- Update inline comments if the fix reveals non-obvious behavior
+- Update CHANGELOG.md if fix affects public API or behavior
+
+**Important**: Do not skip straight to step 4. Systematic enumeration and logging prevents fixing symptoms instead of root causes.
+
 ## Task Recipes Claude Should Follow
 
 ### A. Read and Summarize Before Editing
@@ -321,9 +402,59 @@ POST /simulate
 2) Keep profile features bounded and stable across runs
 3) Use behavior as the backbone and profiles as additional signal
 
+## Hooks and Commands
+
+### Available Slash Commands
+- `/check-determinism` - Scan for non-deterministic patterns (temperature, random, sampling)
+- `/run-gates` - Execute quality gates and report separation metrics
+- `/check-guards` - Verify ReasonGuard usage for all LLM outputs
+- `/audit-config` - Find hardcoded params that should be in CONFIGS/
+- `/debug-loop` - Run systematic debugging loop for an issue
+- `/pre-commit` - Run all pre-commit checks before committing
+
+### Active Hooks
+Hooks run automatically on tool usage and enforce project standards:
+
+**Post-write hooks** (after Write tool):
+- Auto-format with black
+- Check for determinism violations (ERROR if found)
+- Verify type hints present (WARNING)
+- Check for hardcoded parameters (WARNING)
+- Ensure imports start with `__future__`
+- Verify guard usage with twin calls (WARNING)
+
+**Pre-bash hooks** (before Bash tool):
+- Block destructive operations (rm -rf /, sudo, chmod 777)
+- Prevent modification of protected files (twin_bank.json, .git/config)
+- Enforce package manager consistency
+- Block manual lockfile edits
+- Warn about /tmp usage in production code
+
+**Post-edit hooks** (after Edit tool):
+- Check if edit introduced non-determinism (ERROR if yes)
+- Check if edit removed guard calls (ERROR if yes)
+- Validate Python syntax after edit
+- Warn if edit weakened test assertions
+- Check for obvious "WHAT" comments
+
+**Pre-commit hooks** (before git commit):
+- Run determinism check across codebase
+- Run type check if mypy available
+- Verify guard usage in API/reasoning code
+- Check for hardcoded parameters
+- Run test suite (must pass)
+- Run quality gates if twin logic modified
+
+### Hook Behavior
+- **ERROR**: Blocks operation, must fix before proceeding
+- **WARNING**: Operation continues, but should address issue
+- **INFO**: Informational only, no action required
+
 ## Important Notes
 - **Never** modify `DATA/twin_bank.json` manually (regenerate via distillation)
 - **Always** use guard when returning LLM twin reasons
 - **Test files are in TESTS/** (uppercase), not tests/
 - **Policy heads** are optional (controlled by `CONFIGS/serve/policy.yaml`)
 - **Reason cache** improves performance for repeated queries
+- **Hooks enforce standards** - don't bypass them without good reason
+- **Use slash commands** for common validation tasks

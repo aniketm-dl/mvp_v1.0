@@ -1,0 +1,254 @@
+# Training Configuration
+# Central control for SFT, DPO, and ORPO training
+# WHY: Single source of truth for all training hyperparameters
+
+# Base model configuration
+model:
+  base_model: "mistralai/Mistral-7B-Instruct-v0.2"
+  model_type: "causal_lm"  # causal_lm, seq2seq
+  torch_dtype: "float16"    # float16, bfloat16, float32
+  device_map: "auto"        # auto, cuda:0, cpu
+  load_in_8bit: false       # Use 8-bit quantization
+  load_in_4bit: false       # Use 4-bit quantization
+  trust_remote_code: false  # For custom model architectures
+
+# LoRA/PEFT configuration
+lora:
+  enabled: true
+  rank: 8                   # LoRA rank (r)
+  alpha: 16                 # LoRA scaling factor
+  dropout: 0.05             # LoRA dropout
+  target_modules: "auto"    # auto-detect or ["q_proj", "v_proj", "k_proj", "o_proj"]
+  bias: "none"              # none, all, lora_only
+  task_type: "CAUSAL_LM"    # CAUSAL_LM, SEQ_2_SEQ_LM
+  modules_to_save: []       # Additional modules to train fully
+
+# Training method selection
+training_method:
+  type: "sft"               # sft, dpo, orpo
+
+  # SFT-specific settings
+  sft:
+    enabled: true
+    mlm: false              # Masked language modeling (false for causal LM)
+
+  # DPO-specific settings
+  dpo:
+    enabled: false
+    beta: 0.1               # DPO temperature parameter
+    reference_model: null   # Path to reference model (null = use base)
+    loss_type: "sigmoid"    # sigmoid, hinge, ipo
+
+  # ORPO-specific settings
+  orpo:
+    enabled: false
+    alpha: 1.0              # ORPO mixing coefficient
+    beta: 0.1               # ORPO regularization
+
+# Training hyperparameters
+training:
+  # Optimization
+  learning_rate: 2.0e-4     # Initial learning rate
+  lr_scheduler_type: "cosine"  # linear, cosine, constant
+  warmup_ratio: 0.03        # Warmup steps as fraction of total
+  weight_decay: 0.01        # L2 regularization
+
+  # Epochs and steps
+  num_train_epochs: 1       # Number of training epochs
+  max_steps: -1             # Override epochs if > 0
+
+  # Batch sizes
+  per_device_train_batch_size: 1      # Batch size per GPU
+  per_device_eval_batch_size: 2       # Eval batch size
+  gradient_accumulation_steps: 8      # Effective batch = batch_size * accumulation
+
+  # Sequence length
+  max_length: 512           # Maximum sequence length
+  truncation: true          # Truncate if longer than max_length
+  padding: "max_length"     # max_length, longest, do_not_pad
+
+  # Mixed precision
+  fp16: true                # Use fp16 training
+  bf16: false               # Use bfloat16 (A100+ only)
+
+  # Gradient optimization
+  gradient_checkpointing: true         # Trade compute for memory
+  gradient_checkpointing_kwargs:
+    use_reentrant: false
+  max_grad_norm: 1.0        # Gradient clipping
+
+  # Optimizer
+  optim: "adamw_torch"      # adamw_torch, adamw_hf, sgd
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+
+# Data configuration
+data:
+  # Paths
+  personas_file: "DATA/personas.json"
+  sft_data_dir: "DATA/sft"
+  pairs_data_dir: "DATA/pairs"
+
+  # Data processing
+  preprocessing_num_workers: 4
+  dataloader_num_workers: 2
+  dataloader_pin_memory: true
+
+  # Train/val split
+  eval_split: 0.1           # Fraction for validation
+  shuffle: true             # Shuffle training data
+  seed: 17                  # Data shuffle seed
+
+# Checkpointing and saving
+checkpointing:
+  output_dir: "artifacts/llm_adapters"
+  save_strategy: "epoch"    # epoch, steps, no
+  save_steps: 500           # If save_strategy=steps
+  save_total_limit: 2       # Keep only N best checkpoints
+  load_best_model_at_end: false
+
+  # Resume training
+  resume_from_checkpoint: null  # Path to checkpoint or "latest"
+
+# Evaluation
+evaluation:
+  evaluation_strategy: "no"  # no, steps, epoch
+  eval_steps: 500           # If evaluation_strategy=steps
+  eval_accumulation_steps: null
+  per_device_eval_batch_size: 2
+
+# Logging
+logging:
+  logging_dir: "artifacts/logs"
+  logging_strategy: "steps"  # steps, epoch
+  logging_steps: 50
+  report_to: []             # [], tensorboard, wandb, mlflow
+  log_level: "INFO"         # DEBUG, INFO, WARNING, ERROR
+  log_on_each_node: false
+
+# Early stopping
+early_stopping:
+  enabled: false
+  patience: 3               # Epochs without improvement
+  threshold: 0.001          # Minimum change to qualify as improvement
+
+# Distributed training
+distributed:
+  enabled: false
+  strategy: "ddp"           # ddp, fsdp, deepspeed
+  local_rank: -1
+  world_size: 1
+
+  # DeepSpeed config (if using)
+  deepspeed: null           # Path to DeepSpeed config JSON
+
+# Hardware optimization
+hardware:
+  # Memory optimization
+  use_cpu: false
+  low_cpu_mem_usage: true
+
+  # CUDA settings
+  cuda_visible_devices: "0"  # GPU IDs to use
+  fp16_full_eval: false
+
+  # Advanced optimizations
+  torch_compile: false      # PyTorch 2.0+ compilation
+  optim_target_modules: null
+
+# Quality and validation
+quality:
+  # Determinism
+  seed: 17
+  deterministic: true       # Use deterministic algorithms
+
+  # Validation checks
+  verify_after_training: true      # Test inference after training
+  check_adapter_size: true         # Verify adapter size in reasonable range
+  expected_adapter_size_mb: [10, 100]
+
+  # Separation metrics (for twin distinctiveness)
+  check_separation: true
+  min_silhouette: 0.35
+  min_jsd: 0.10
+  min_ari: 0.80
+
+# Persona-specific settings
+personas:
+  # Train all personas by default
+  train_all: true
+
+  # Or specify subset
+  twin_ids: []              # If empty and train_all=false, train none
+
+  # Persona conditioning
+  conditioning_type: "archetype_id"  # archetype_id, embedding, prompt
+
+# Multi-GPU and parallelization
+parallelization:
+  enabled: false
+  strategy: "sequential"    # sequential, multi_gpu, distributed
+  num_workers: 1
+  twins_per_gpu: 1
+
+# Error handling and recovery
+error_handling:
+  max_retries: 3
+  retry_delay_seconds: 60
+  fail_fast: false          # Stop all training if one fails
+  save_failed_log: true
+  continue_on_error: true
+
+# Monitoring and reporting
+monitoring:
+  track_metrics: true
+  metrics_file: "artifacts/training_metrics.json"
+  track_gpu_memory: true
+  track_token_usage: true
+
+  # Alerts (future)
+  alert_on_failure: false
+  alert_on_complete: false
+
+# AWS/Cloud integration
+cloud:
+  # S3 sync
+  s3_enabled: false
+  s3_bucket: null
+  s3_prefix: "darpan_training"
+  sync_frequency: "per_twin"  # per_twin, per_epoch, end_only
+
+  # Instance management
+  auto_shutdown: false
+  shutdown_delay_minutes: 5
+
+  # Cost tracking
+  track_costs: true
+  instance_type: "g5.xlarge"
+  cost_per_hour: 0.35
+
+# Experimental features
+experimental:
+  # Gradient accumulation with loss scaling
+  gradient_accumulation_with_loss_scaling: false
+
+  # Dynamic batch sizing
+  auto_find_batch_size: false
+
+  # Mixed training methods
+  multi_task_learning: false
+
+# Version and metadata
+metadata:
+  version: "1.0"
+  last_updated: "2025-10-15"
+  owner: "darpan-labs"
+  purpose: "Central training config for SFT/DPO/ORPO"
+  phase: "1-config-centralization"
+
+  # Training method descriptions
+  methods:
+    sft: "Supervised Fine-Tuning on persona-specific examples"
+    dpo: "Direct Preference Optimization using preference pairs"
+    orpo: "Odds Ratio Preference Optimization (alternative to DPO)"

@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Darpan Labs Lint Configuration",
+  "description": "Enforces code quality, determinism, and safety standards for the What-If Simulator",
+
+  "rules": {
+    "determinism": {
+      "description": "Ensure all model operations are deterministic",
+      "patterns": {
+        "required": [
+          "temperature\\s*=\\s*0",
+          "top_p\\s*=\\s*1",
+          "set_global_seed\\("
+        ],
+        "forbidden": [
+          "temperature\\s*=\\s*(?!0\\b)",
+          "random\\.random\\(",
+          "np\\.random\\.(?!seed)",
+          "torch\\.rand\\(",
+          "\\bsample\\b.*temperature(?!.*=.*0)"
+        ]
+      },
+      "severity": "error"
+    },
+
+    "config_driven": {
+      "description": "Model parameters must live in config files, not hardcoded",
+      "patterns": {
+        "forbidden": [
+          "model_name\\s*=\\s*['\"](?!\\{)",
+          "learning_rate\\s*=\\s*[0-9]+\\.[0-9]+(?!.*\\bargs\\.)",
+          "epochs\\s*=\\s*[0-9]+(?!.*\\bargs\\.)",
+          "batch_size\\s*=\\s*[0-9]+(?!.*\\bargs\\.)"
+        ]
+      },
+      "severity": "warning",
+      "exceptions": [
+        "TESTS/**",
+        "**/test_*.py"
+      ]
+    },
+
+    "no_magic_numbers": {
+      "description": "No magic numbers for generation parameters",
+      "patterns": {
+        "forbidden": [
+          "max_tokens\\s*=\\s*[0-9]+(?!.*\\bargs\\.|\\bconfig\\.)",
+          "max_length\\s*=\\s*[0-9]+(?!.*\\bargs\\.|\\bconfig\\.)",
+          "num_beams\\s*=\\s*[0-9]+(?!.*\\bargs\\.|\\bconfig\\.)"
+        ]
+      },
+      "severity": "warning",
+      "exceptions": [
+        "TESTS/**",
+        "**/test_*.py",
+        "**/__init__.py"
+      ]
+    },
+
+    "guard_enforcement": {
+      "description": "All LLM reasons must pass through ReasonGuard",
+      "patterns": {
+        "required_together": [
+          ["reason.*=.*llm", "guard\\.check"],
+          ["twin\\.decide", "guard\\.check"]
+        ]
+      },
+      "severity": "error",
+      "exceptions": [
+        "src/reasoning/guard.py"
+      ]
+    },
+
+    "type_hints": {
+      "description": "All functions must have type hints",
+      "patterns": {
+        "required": [
+          "def\\s+\\w+\\([^)]*\\)\\s*->\\s*"
+        ]
+      },
+      "severity": "warning",
+      "exceptions": [
+        "**/__init__.py",
+        "scripts/**"
+      ]
+    },
+
+    "comment_style": {
+      "description": "Comments should explain WHY, not WHAT. Remove obvious comments.",
+      "patterns": {
+        "forbidden": [
+          "#\\s*[Ll]oop through",
+          "#\\s*[Ii]nitialize",
+          "#\\s*[Rr]eturn",
+          "#\\s*[Cc]reate a",
+          "#\\s*[Ss]et\\s+\\w+\\s+to"
+        ]
+      },
+      "severity": "info"
+    },
+
+    "immutable_constraints": {
+      "description": "Only allowed mutable context keys can be modified",
+      "allowed_mutables": [
+        "price_mean",
+        "price_min",
+        "price_max",
+        "promo_badge",
+        "delivery_eta_days",
+        "copy_variant_id"
+      ],
+      "severity": "error"
+    },
+
+    "file_safety": {
+      "description": "Prevent dangerous file operations",
+      "patterns": {
+        "forbidden": [
+          "rm\\s+-rf\\s+/",
+          "sudo\\s+",
+          "chmod\\s+777",
+          "\\.pyc\\s+write",
+          "DATA/twin_bank\\.json.*write"
+        ]
+      },
+      "severity": "error"
+    }
+  },
+
+  "formatting": {
+    "max_line_length": 100,
+    "indent_size": 4,
+    "quote_style": "double",
+    "trailing_comma": true
+  },
+
+  "imports": {
+    "order": [
+      "future",
+      "standard_library",
+      "third_party",
+      "first_party",
+      "local"
+    ],
+    "required_first": [
+      "from __future__ import annotations"
+    ]
+  }
+}

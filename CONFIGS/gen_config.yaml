@@ -1,0 +1,140 @@
+# Generation Configuration
+# Central control for all LLM decoding parameters
+# WHY: Prevents hardcoded parameters and ensures deterministic behavior across all twins
+
+# Global defaults for deterministic generation
+# These apply unless overridden by persona-specific settings
+global_defaults:
+  temperature: 0.0        # MUST be 0 for determinism
+  top_p: 1.0             # MUST be 1 for determinism
+  top_k: 0               # Disabled (use top_p)
+  max_new_tokens: 50     # Default for reasons/short responses
+  max_length: 512        # Maximum total sequence length
+  repetition_penalty: 1.0
+  do_sample: false       # Greedy decoding only
+  seed: 17               # Global seed for reproducibility
+  num_beams: 1           # No beam search for determinism
+  early_stopping: false
+
+# Persona-specific overrides (optional)
+# Each twin can have different max_tokens based on their verbosity
+persona_overrides:
+  # Verbose personas (Premium, Researcher)
+  verbose:
+    twin_ids: ["premium_loyalist", "research_oriented", "comparison_shopper"]
+    max_new_tokens: 75
+    max_length: 600
+
+  # Concise personas (Budget, Impulse)
+  concise:
+    twin_ids: ["bargain_hunter", "impulse_buyer", "mobile_shopper"]
+    max_new_tokens: 30
+    max_length: 400
+
+  # Standard (all others)
+  standard:
+    twin_ids: []  # Default for unlisted
+    max_new_tokens: 50
+    max_length: 512
+
+# Task-specific generation settings
+task_settings:
+  # Chat: conversational responses
+  chat:
+    max_new_tokens: 100
+    max_length: 1024
+    temperature: 0.0  # Still deterministic
+    top_p: 1.0
+
+  # Decide: product choice with short reason
+  decide:
+    max_new_tokens: 20
+    max_length: 512
+    temperature: 0.0
+    top_p: 1.0
+
+  # Explain: detailed explanation mode
+  explain:
+    max_new_tokens: 80
+    max_length: 600
+    temperature: 0.0
+    top_p: 1.0
+
+  # Simulate: blend of decisions
+  simulate:
+    max_new_tokens: 50
+    max_length: 512
+    temperature: 0.0
+    top_p: 1.0
+
+# Model-specific overrides (if using different base models)
+model_overrides:
+  "mistralai/Mistral-7B-Instruct-v0.2":
+    # Mistral-specific settings
+    max_new_tokens: 50
+    bos_token_id: 1
+    eos_token_id: 2
+    pad_token_id: 0
+
+  "gpt2":
+    # GPT-2 for testing
+    max_new_tokens: 40
+    max_length: 256
+
+# Caching behavior
+caching:
+  enabled: true
+  cache_by_seed: true          # Different seeds = different cache keys
+  cache_temperature_zero_only: true  # Only cache deterministic outputs
+  ttl_seconds: 3600            # 1 hour cache lifetime
+
+# Validation rules
+validation:
+  enforce_determinism: true    # Block if temperature != 0 or top_p != 1
+  check_token_limits: true     # Warn if max_new_tokens exceeds model limits
+  require_seed: true           # Block if seed not set
+
+# ReasonGuard integration
+reason_guard:
+  max_reason_tokens: 20        # Hard limit enforced by guard
+  check_grounding: true        # Reasons must reference visible context
+  numeric_audit: true          # Numbers in reasons must match context
+  fallback_on_failure: true    # Use fallback_reason if guard fails
+
+# Inference optimization
+optimization:
+  use_cuda: true
+  torch_dtype: "float16"       # fp16 for faster inference
+  device_map: "auto"           # Automatic device placement
+  low_cpu_mem_usage: true
+  load_in_8bit: false          # Disable for now (compatibility)
+  load_in_4bit: false
+
+# Monitoring and logging
+monitoring:
+  log_generation_params: true  # Log params for each generation
+  track_token_usage: true      # Track tokens per request
+  alert_on_non_determinism: true  # Alert if temperature != 0 detected
+  log_level: "INFO"
+
+# Feature flags
+features:
+  use_policy_heads: true       # Use fast linear heads when available
+  fallback_to_llm: true        # Fall back to LLM if heads missing
+  cache_reasons: true          # Cache reasons by scenario hash
+  parallel_twin_calls: false   # Sequential for determinism
+
+# Quality thresholds
+quality:
+  min_reason_length: 3         # Minimum tokens in reason
+  max_reason_length: 20        # Maximum tokens (enforced by guard)
+  min_probability: 0.0         # Minimum valid probability
+  max_probability: 1.0         # Maximum valid probability
+
+# Version and metadata
+metadata:
+  version: "1.0"
+  last_updated: "2025-10-15"
+  owner: "darpan-labs"
+  purpose: "Central decoding config for What-If Simulator"
+  phase: "1-config-centralization"
