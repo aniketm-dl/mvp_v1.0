@@ -1,0 +1,89 @@
+# Code Review Configuration
+# Tool toggles, thresholds, and file patterns for automated code review
+
+# Tool availability and toggles
+tools:
+  python:
+    ruff: true
+    basedpyright: true
+    bandit: true
+    pip_audit: true
+    coverage: true
+  javascript:
+    eslint: true
+    typescript: true
+    npm_audit: true
+  security:
+    semgrep: true
+    gitleaks: true
+  containers:
+    hadolint: true
+    trivy: false  # Optional, may not be available
+  infrastructure:
+    checkov: false  # Optional, may not be available
+    yamllint: true
+  sbom:
+    syft: false  # Optional, may not be available
+    pip_licenses: true
+
+# File patterns and exclusions
+patterns:
+  include:
+    - "**/*.py"
+    - "**/*.js"
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.yaml"
+    - "**/*.yml"
+    - "**/*.json"
+    - "**/Dockerfile*"
+    - "**/*.tf"
+    - "**/*.md"
+  exclude:
+    - "venv/**"
+    - "node_modules/**"
+    - "__pycache__/**"
+    - "*.pyc"
+    - ".git/**"
+    - "artifacts/**"
+    - "reports/**"
+    - "archive/**"
+
+# Quality thresholds
+thresholds:
+  coverage_min: 70
+  max_line_length: 120
+  max_complexity: 10
+  max_cyclomatic_complexity: 15
+  max_parameters: 5
+  max_returns: 3
+
+# Time limits (seconds)
+timeouts:
+  total_review: 600  # 10 minutes
+  individual_tool: 60
+  test_execution: 120
+
+# Severity levels
+severity:
+  critical: ["security", "data_leakage", "secrets"]
+  high: ["performance", "reliability", "maintainability"]
+  medium: ["style", "documentation", "test_coverage"]
+  low: ["formatting", "naming", "minor_issues"]
+
+# ML-specific checks
+ml_checks:
+  enabled: true
+  check_seeds: true
+  check_determinism: true
+  check_data_leakage: true
+  check_pii: true
+  check_model_cards: true
+  check_licensing: true
+
+# Report settings
+report:
+  max_findings_per_category: 50
+  include_raw_outputs: true
+  generate_patches: true
+  patch_confidence_threshold: 0.8

@@ -79,7 +79,13 @@
       "Bash(cd /Users/aniketniranjanmishra/Desktop/Darpan\\ Labs/mvp_v1.0 && /Users/aniketniranjanmishra/Desktop/Darpan\\ Labs/mvp_v1.0/venv/bin/python:*)",
       "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/ruff check src/data/opera/ --select F,E,W,I --fix)",
       "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/ruff check src/data/opera/ --select F,E,W,I)",
-      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python -m pytest TESTS/test_encoder_shapes.py -v --tb=short)"
+      "Bash(/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/venv/bin/python -m pytest TESTS/test_encoder_shapes.py -v --tb=short)",
+      "Read(//Users/aniketniranjanmishra/**)",
+      "Bash(aws ec2 describe-instances:*)",
+      "Bash(ssh:*)",
+      "Bash(aws ec2-instance-connect send-ssh-public-key:*)",
+      "Bash(ssh-keygen:*)",
+      "Bash(aws ssm send-command:*)"
     ],
     "deny": [],
     "ask": []

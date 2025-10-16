@@ -157,6 +157,26 @@ personas-discover: ## Discover personas from Opera dataset
 personas-list: ## List all available personas
 	@python -c "import json; from pathlib import Path; data = json.loads(Path('DATA/personas.json').read_text()); print(f'Total Personas: {len(data[\"personas\"])}'); [print(f'  {i+1}. {p[\"label\"]} ({p[\"id\"]})') for i, p in enumerate(data['personas'])]"
 
+##@ Phase 1-3: Complete Discovery Pipeline
+
+phase-1-3-aws: ## Run complete Phase 1-3 pipeline on AWS (OPeRA → Encoder → Discovery)
+	./run_phase_1_to_3_aws.sh
+
+phase-1-3-local: ## Run complete Phase 1-3 pipeline locally (requires GPU)
+	./run_phase_1_to_3_local.sh
+
+phase-1-3-validate: ## Validate Phase 1-3 outputs
+	python3 scripts/validate_phase_1_3.py
+
+phase-1-parse: ## Phase 1: Parse OPeRA data only
+	python3 scripts/parse_opera.py --in DATA/OPeRA/raw --out DATA/OPeRA/processed --config CONFIGS/opera.yaml
+
+phase-2-encoder: ## Phase 2: Train behavioral encoder only
+	python3 scripts/train/encoder_train.py --data DATA/OPeRA/processed --config CONFIGS/encoder.yaml --out artifacts/encoder
+
+phase-3-discovery: ## Phase 3: Run persona discovery only
+	python3 scripts/run_dynamic_discovery.py
+
 ##@ Training Data Preparation
 
 prep-sft-data: ## Prepare SFT training data
@@ -305,6 +325,7 @@ quickstart: ## Show quick start guide
 .PHONY: setup-remote train-remote train-remote-status
 .PHONY: serve serve-prod interact test test-verbose test-specific gate guard metrics all-checks
 .PHONY: lint fmt clean clean-models dataset-opera dataset-info personas-discover personas-list
+.PHONY: phase-1-3-aws phase-1-3-local phase-1-3-validate phase-1-parse phase-2-encoder phase-3-discovery
 .PHONY: prep-sft-data prep-opera-sft train-local-all train-local-one eval-adapter
 .PHONY: cost-status cost-alert s3-list s3-upload s3-download openapi docs-api
 .PHONY: docker-build docker-run docker-stop report-confusion report-deltas
