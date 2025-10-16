@@ -70,3 +70,4 @@ credentials.json
 # AWS credentials reference (NEVER COMMIT)
 .aws_credentials_reference.txt
 AWS_SETUP_COMPLETE.md
+reports/code_review/bandit.json
