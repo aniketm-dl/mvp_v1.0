@@ -71,3 +71,4 @@ credentials.json
 .aws_credentials_reference.txt
 AWS_SETUP_COMPLETE.md
 reports/code_review/bandit.json
+.github/workflows/opera-ci.yml
