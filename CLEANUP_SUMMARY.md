@@ -1,7 +1,7 @@
 # Repository Cleanup Summary
 
 **Date:** October 26, 2025
-**Branch Strategy:** archive (legacy) + refactor/aws-workflow-automation (clean)
+**Branch Strategy:** archive (legacy) + mvp_opera (clean)
 **Result:** Clean, focused OPeRA-SSR codebase
 
 ---
@@ -29,7 +29,7 @@
 
 ### 2. Cleaned Working Branch
 
-**Branch:** `refactor/aws-workflow-automation`
+**Branch:** `mvp_opera`
 **Purpose:** Clean OPeRA-SSR-only codebase
 
 **Removed (389 files deleted):**
@@ -144,8 +144,8 @@
 
 ## Branch Comparison
 
-| Feature | `archive` | `refactor/aws-workflow-automation` |
-|---------|-----------|-------------------------------------|
+| Feature | `archive` | `mvp_opera` |
+|---------|-----------|-------------|
 | **System** | Legacy LLM Twin Simulator | OPeRA-SSR Digital Twins |
 | **Model** | Mistral-7B + LoRA | sentence-transformers |
 | **Personas** | Hand-crafted synthetic | Data-driven from OPeRA |
@@ -163,8 +163,8 @@
 ### OPeRA-SSR System (Current)
 
 ```bash
-# On branch: refactor/aws-workflow-automation
-git checkout refactor/aws-workflow-automation
+# On branch: mvp_opera
+git checkout mvp_opera
 
 # Quick start
 export OPENAI_API_KEY='your-key-here'
@@ -214,7 +214,7 @@ For developers wondering where code moved:
 
 ## Directory Structure
 
-### Current (refactor/aws-workflow-automation)
+### Current (mvp_opera)
 
 ```
 mvp_v1.0/
@@ -287,7 +287,7 @@ ls darpan.py  # ✅ Exists
 ### Clean Branch Works ✅
 
 ```bash
-git checkout refactor/aws-workflow-automation
+git checkout mvp_opera
 cat README.md  # Clean OPeRA-SSR docs
 ls src/ssr/inference.py  # ✅ Exists
 ls src/personas/discovery.py  # ✅ Exists
@@ -369,7 +369,7 @@ Easy to:
 
 **To OPeRA-SSR (current):**
 ```bash
-git checkout refactor/aws-workflow-automation
+git checkout mvp_opera
 pip install -e .
 export OPENAI_API_KEY='your-key'
 python scripts/01_download_opera.py
@@ -400,6 +400,6 @@ make serve  # or python darpan.py chat
 
 **Cleanup performed by:** Claude Code
 **Date:** October 26, 2025
-**Branches affected:** `archive` (created), `refactor/aws-workflow-automation` (cleaned)
+**Branches affected:** `archive` (created), `mvp_opera` (cleaned)
 **Total deletions:** 389 files, ~9M lines removed
 
