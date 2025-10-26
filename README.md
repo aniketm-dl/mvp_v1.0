@@ -1,52 +1,149 @@
-# Darpan Labs - Digital Twin Simulator
+# Darpan Labs - OPeRA-SSR Digital Twins
 
-**Production-ready LLM-powered personas for e-commerce "what-if" simulations**
+**Semantic Similarity Rating system for predicting user responses to e-commerce scenarios using real behavioral data.**
 
-Train 18+ unique shopper personas on AWS GPU in 90 minutes for ~$0.50. Ask "what if we change the price?" and get persona-specific predictions with explanations.
+Train data-driven personas from the OPeRA dataset and predict how users would rate new products, promotions, and ad copy.
 
 ---
 
-## 🚀 Quick Start (5 Steps)
+## 🚀 Quick Start
 
-### Complete Automated Workflow
-
-```bash
-# One command to rule them all
-make workflow
-```
-
-This will:
-1. **Launch** AWS GPU instance (g5.xlarge spot)
-2. **Setup** environment (CUDA, Python, dependencies)
-3. **Train** all persona adapters (1.5 hours)
-4. **Download** trained models from S3
-5. **Chat** with your trained personas interactively
-
-### Step-by-Step Workflow
+### Option 1: Local Training (2 hours)
 
 ```bash
-# 1. Launch AWS instance
-make launch
+# 1. Install dependencies
+pip install -e .
 
-# 2. SSH into instance and run setup
-ssh -i ~/darpan-training.pem ubuntu@<INSTANCE_IP>
-make setup-instance
+# 2. Set OpenAI API key (for persona summarization)
+export OPENAI_API_KEY='your-key-here'
 
-# 3. Train models (on EC2 instance)
-make train
+# 3. Download OPeRA dataset
+python scripts/01_download_opera.py
 
-# 4. Download models (on local machine)
-make download
+# 4. Preprocess data
+python scripts/02_preprocess_opera.py
 
-# 5. Chat with personas
-make chat
+# 5. Discover personas
+python scripts/03_discover_personas.py --use-llm-summary
+
+# 6. Train SSR model
+python scripts/04_train_ssr.py
+
+# 7. Evaluate model
+python scripts/07_evaluate.py
+
+# 8. Launch demo
+streamlit run src/app/main.py
 ```
 
-### Cost
+### Option 2: AWS One-Command Training (~$0.50)
 
-- **Instance**: g5.xlarge spot @ $0.35/hr
-- **Training time**: ~1.5 hours
-- **Total cost**: ~$0.50
+```bash
+export OPENAI_API_KEY='your-key-here'
+export TRAINING_S3_BUCKET='darpan-training-yourusername'
+
+bash scripts/aws/train_complete_pipeline.sh --auto-shutdown
+```
+
+---
+
+## 📊 What This Does
+
+### The Problem
+
+E-commerce companies need to answer questions like:
+- "How would users respond to a 20% price increase?"
+- "Which ad copy performs better for budget-conscious shoppers?"
+- "How do free shipping offers impact purchase decisions?"
+
+### The Solution
+
+Train a **Semantic Similarity Rating (SSR)** model that:
+1. **Discovers personas** from real user behavior (OPeRA dataset)
+2. **Predicts ratings** (1-5 Likert scale) for any scenario
+3. **Provides distributions** showing confidence and variability
+4. **Runs fast** (<50ms per prediction)
+
+### Example
+
+```python
+from src.ssr.inference import SSRInference
+
+ssr = SSRInference("models/ssr_reference")
+
+# Predict rating for a scenario
+prediction = ssr.predict("Free shipping on all orders over $50")
+
+print(f"Mean rating: {prediction['mean']:.2f}")
+print(f"Mode (most likely): {prediction['mode']}")
+print(f"Distribution: {prediction['distribution']}")
+
+# Output:
+# Mean rating: 3.82
+# Mode (most likely): 4
+# Distribution: [0.05, 0.10, 0.25, 0.40, 0.20]
+```
+
+---
+
+## 🏗️ Architecture
+
+### Pipeline Overview
+
+```
+1. OPeRA Dataset (HuggingFace)
+   ↓
+2. Data Alignment & Feature Extraction
+   ↓
+3. Persona Discovery (UMAP + HDBSCAN)
+   ↓
+4. GPT-4o-mini Persona Summarization
+   ↓
+5. SSR Model Training (sentence-transformers)
+   ↓
+6. Evaluation (KS Similarity, Correlations)
+   ↓
+7. Streamlit Demo App
+```
+
+### Directory Structure
+
+```
+mvp_v1.0/
+├── src/
+│   ├── data/opera/          # OPeRA dataset pipeline
+│   ├── personas/            # Persona discovery (UMAP + HDBSCAN)
+│   ├── ssr/                 # SSR model (training + inference)
+│   ├── evaluation/          # Metrics (KS, correlations, dashboards)
+│   └── app/                 # Streamlit demo
+│
+├── scripts/
+│   ├── 01_download_opera.py        # Download OPeRA from HuggingFace
+│   ├── 02_preprocess_opera.py      # Align & extract features
+│   ├── 03_discover_personas.py     # UMAP + HDBSCAN + GPT-4o
+│   ├── 04_train_ssr.py             # Train SSR model
+│   ├── 07_evaluate.py              # Evaluate on test set
+│   └── aws/
+│       └── train_complete_pipeline.sh  # One-command AWS training
+│
+├── DATA/OPeRA/
+│   ├── raw/                 # Downloaded from HuggingFace
+│   └── processed/           # Aligned sequences, features, pairs
+│
+├── models/
+│   ├── ssr_reference/       # Trained SSR model
+│   └── persona_profiles.json  # Discovered personas
+│
+├── reports/
+│   ├── evaluation_results.json        # Metrics
+│   └── evaluation_dashboard.html     # Interactive dashboard
+│
+└── docs/
+    ├── AWS_SETUP.md         # AWS account setup
+    ├── TRAINING.md          # Training guide
+    ├── EVALUATION.md        # Evaluation metrics
+    └── mvp_scope.md         # Complete specification
+```
 
 ---
 
@@ -55,384 +152,315 @@ make chat
 ### Local Machine
 
 ```bash
-# Install AWS CLI
-brew install awscli  # macOS
-# or: pip install awscli
-
-# Configure AWS credentials
-aws configure
-# Enter Access Key ID, Secret Key, region (us-east-1)
-
-# Create S3 bucket for models
-aws s3 mb s3://darpan-training-$(whoami)
-export TRAINING_S3_BUCKET=darpan-training-$(whoami)
-
-# Clone repo
-git clone https://github.com/aniketm-dl/mvp_v1.0.git
-cd mvp_v1.0
+# Python 3.9+
+python --version
 
 # Install dependencies
-make setup
+pip install -e .
 ```
 
-### AWS Account
+### OpenAI API Key
 
-1. Sign up at [aws.amazon.com](https://aws.amazon.com)
+For persona summarization with GPT-4o-mini:
+
+1. Go to https://platform.openai.com/api-keys
+2. Create new API key
+3. Export it:
+   ```bash
+   export OPENAI_API_KEY='sk-proj-...'
+   ```
+
+### AWS (Optional - for cloud training)
+
+1. Sign up at https://aws.amazon.com
 2. Create IAM user with EC2 + S3 permissions
-3. Generate Access Key (save credentials)
-4. Request GPU quota if needed (see [docs/AWS_SETUP.md](docs/AWS_SETUP.md))
-
-### HuggingFace Token
-
-1. Go to https://huggingface.co/settings/tokens
-2. Create token with "Read" access
-3. Keep it handy (needed during setup)
+3. Configure AWS CLI:
+   ```bash
+   aws configure
+   ```
+4. Create S3 bucket:
+   ```bash
+   aws s3 mb s3://darpan-training-$(whoami)
+   export TRAINING_S3_BUCKET=darpan-training-$(whoami)
+   ```
 
 ---
 
 ## 💻 Usage
 
-### Workflow Commands
+### Core Pipeline
 
 ```bash
-# Full automated workflow
-make workflow                    # Complete: Launch → Setup → Train → Download → Chat
-make workflow-status             # Check progress
+# Download OPeRA dataset (~5-10 min)
+python scripts/01_download_opera.py
 
-# Individual steps
-make launch                      # Launch AWS GPU instance
-make setup-instance              # Setup instance (run on EC2)
-make train                       # Train all personas (on EC2)
-make train-subset                # Train specific personas
-make train-parallel              # Multi-GPU parallel training
-make download                    # Download trained models from S3
-make chat                        # Interactive chat with personas
+# Preprocess & align data (~10-15 min)
+python scripts/02_preprocess_opera.py
+
+# Discover personas (~15-20 min)
+python scripts/03_discover_personas.py --use-llm-summary
+
+# Train SSR model (~20-30 min)
+python scripts/04_train_ssr.py \
+  --embedding-epochs 10 \
+  --regression-epochs 20
+
+# Evaluate model (~5-10 min)
+python scripts/07_evaluate.py
+
+# Launch demo
+streamlit run src/app/main.py
 ```
 
-### Development Commands
-
-```bash
-# Local API server
-make serve                       # Start FastAPI server (http://localhost:8000)
-make interact                    # CLI chat interface
-
-# Testing & Quality
-make test                        # Run all tests
-make gate                        # Check persona separation quality
-make all-checks                  # Full test suite
-
-# Code quality
-make fmt                         # Format code
-make lint                        # Run linters
-make clean                       # Clean build artifacts
-```
-
-### Dataset & Personas
-
-```bash
-# Dataset management
-make dataset-opera               # Download Opera dataset
-make dataset-info                # Show dataset statistics
-make personas-discover           # Discover personas from Opera data
-make personas-list               # List all available personas
-
-# Training data preparation
-make prep-sft-data               # Prepare SFT training data
-make prep-opera-sft              # Prepare from Opera dataset
-```
-
-### AWS & Cost Management
-
-```bash
-# Cost tracking
-make cost-status                 # Check current AWS costs
-make cost-alert                  # Set budget alert ($5 default)
-
-# S3 management
-make s3-list                     # List S3 contents
-make s3-upload                   # Upload models to S3
-make s3-download                 # Download from S3 (alias: make download)
-```
-
-### Help
-
-```bash
-make help                        # Show all available commands
-make quickstart                  # Show quick start guide
-```
-
----
-
-## 🏗️ Architecture
-
-### Key Components
-
-```
-mvp_v1.0/
-├── darpan.py                    # Unified CLI (NEW!)
-├── Makefile                     # All commands in one place (UPDATED!)
-│
-├── src/
-│   ├── api/                     # FastAPI endpoints
-│   ├── models/                  # Mixture model, encoders, policy heads
-│   ├── reasoning/               # LLM twins, guard, cache
-│   ├── datasets/                # Dataset abstraction (NEW!)
-│   │   ├── base.py             # Base dataset interface
-│   │   ├── opera.py            # Opera dataset implementation
-│   │   └── factory.py          # Dataset factory (extensible)
-│   └── features/                # Feature extraction
-│
-├── scripts/
-│   ├── aws/                     # AWS training automation
-│   │   ├── launch_training_instance.sh
-│   │   ├── setup_training_instance.sh
-│   │   ├── train_production.py
-│   │   └── train_with_s3_sync.py
-│   ├── opera/                   # Opera dataset scripts
-│   └── train_*.py               # Training scripts
-│
-├── DATA/
-│   ├── personas.json            # Persona definitions
-│   ├── sft/                     # Training data (JSONL)
-│   └── opera/                   # Opera dataset files
-│
-├── CONFIGS/
-│   ├── aws/                     # AWS training config
-│   ├── serve/                   # API serving config
-│   └── defaults.yaml            # Default settings
-│
-└── docs/                        # Documentation
-    ├── README.md                # This file
-    ├── AWS_SETUP.md             # AWS account setup
-    ├── TRAINING.md              # Training guide
-    └── API.md                   # API documentation
-```
-
-### Dataset Abstraction Layer (NEW!)
-
-Support for multiple datasets with unified interface:
+### API Usage
 
 ```python
-from src.datasets import DatasetFactory
+from src.ssr.inference import SSRInference
 
-# Load Opera dataset
-dataset = DatasetFactory.create("opera")
+# Load model
+ssr = SSRInference("models/ssr_reference")
 
-# Download raw data
-dataset.download()
+# Single prediction
+pred = ssr.predict("20% off laptops")
+print(pred)
+# {
+#   'mean': 4.1,
+#   'std': 0.8,
+#   'mode': 4,
+#   'distribution': [0.03, 0.07, 0.20, 0.50, 0.20]
+# }
 
-# Discover personas
-personas = dataset.prepare_personas()
+# Batch predictions
+scenarios = ["Free shipping", "Buy 2 get 1", "Premium quality"]
+predictions = ssr.predict_batch(scenarios, return_distributions=True)
 
-# Generate training data for specific persona
-dataset.prepare_training_data("premium_buyer", Path("DATA/sft/premium_buyer.jsonl"))
+# Scenario comparison
+comparison = ssr.compare_scenarios(
+    base_text="Regular price",
+    variant_texts=["10% off", "20% off"],
+    variant_ids=["discount_10", "discount_20"]
+)
 
-# Get dataset stats
-stats = dataset.get_stats()
-```
-
-**Future datasets**: Easy to add Amazon, Shopify, etc. by implementing `BaseDataset`.
-
----
-
-## 🎯 What This Does
-
-### Problem
-
-You want to answer questions like:
-- "What if we raised prices 10%?"
-- "What if we offered free shipping?"
-- "What if we changed the ad copy?"
-
-### Solution
-
-Train LLM-powered "twin" personas that mimic real user segments:
-- **Bargain Hunter**: Prioritizes lowest price
-- **Premium Buyer**: Values quality over price
-- **Deal Hunter**: Loves promotions
-- **+ 15 more personas** from Opera dataset
-
-### Example
-
-```python
-# API Request
-POST /simulate
-{
-  "user_id": "u123",
-  "scenarios": [
-    {"variant_id": "base"},
-    {"variant_id": "10pct_off", "context_overrides": {"price_mean": 90}},
-    {"variant_id": "free_ship", "context_overrides": {"delivery_eta_days": 1}}
-  ],
-  "explain": "blend"
-}
-
-# Response
-{
-  "base": {
-    "top_product": "laptop",
-    "probability": 0.65,
-    "reason": "Good specs at reasonable price"
-  },
-  "10pct_off": {
-    "top_product": "laptop",
-    "probability": 0.82,    # +17% lift!
-    "reason": "Great deal with discount",
-    "delta_vs_base": +0.17
-  },
-  "free_ship": {
-    "top_product": "laptop",
-    "probability": 0.71,    # +6% lift
-    "reason": "Fast delivery is appealing",
-    "delta_vs_base": +0.06
-  }
-}
+for variant in comparison['variants']:
+    print(f"{variant['id']}: {variant['prediction']['mean']:.2f} "
+          f"({variant['lift_percent']:+.1f}% lift)")
 ```
 
 ---
 
-## 🔧 Configuration
+## 🎯 Key Features
 
-### Training Configuration
+### 1. Data-Driven Personas
 
-Edit `CONFIGS/aws/training_config.yaml`:
+Unlike hand-crafted personas, we discover them from real OPeRA user data:
 
-```yaml
-training:
-  base_model: "mistralai/Mistral-7B-Instruct-v0.2"
-  epochs: 1
-  max_length: 512
-  learning_rate: 2e-4
-  lora:
-    rank: 8
-    alpha: 16
-    dropout: 0.1
+- **UMAP** for dimensionality reduction (12-D → 2-D)
+- **HDBSCAN** for density-based clustering
+- **GPT-4o-mini** for natural language summaries
 
-# Parallelization (multi-GPU)
-parallelization:
-  enabled: false
-  num_workers: 4
+**Result:** 8-12 personas with real behavioral patterns
 
-# Error handling
-error_handling:
-  max_retries: 3
-  fail_fast: false
+### 2. Fast Inference
 
-# Cost management
-cost:
-  auto_shutdown: true
-  budget_alert_usd: 5.0
-```
+SSR uses fine-tuned sentence-transformers:
 
-### API Configuration
+- **<50ms** per prediction
+- **No GPU** required for inference
+- **Batch processing** supported
+- **Scalable** to thousands of scenarios
 
-Edit `CONFIGS/serve/api.yaml`:
+### 3. Quantifiable Quality
 
-```yaml
-server:
-  host: "0.0.0.0"
-  port: 8000
-  workers: 4
+Statistical validation:
 
-models:
-  base_model: "mistralai/Mistral-7B-Instruct-v0.2"
-  adapter_dir: "artifacts/llm_adapters"
-  use_cache: true
+- **Spearman correlation** ≥ 0.70 (rank correlation)
+- **KS similarity** ≥ 0.80 (distribution matching)
+- **MAE** < 0.50 (mean absolute error)
+- **RMSE** < 0.60 (root mean squared error)
 
-features:
-  use_policy_heads: true  # Fast path
-  explain_mode: "blend"   # or "per_twin" or "none"
-```
+### 4. Interactive Demo
+
+Streamlit app with:
+
+- **Single prediction** - Test individual scenarios
+- **Scenario comparison** - Compare multiple variants
+- **Persona explorer** - Browse discovered personas
+- **Quick templates** - Pre-built scenario examples
 
 ---
 
 ## 📊 Quality Gates
 
-We ensure personas are well-separated and stable:
+Run evaluation to check quality:
 
 ```bash
-make gate
+python scripts/07_evaluate.py
 ```
 
-Checks:
-- **Silhouette Score** ≥ 0.35 (cluster separation)
-- **Jensen-Shannon Divergence** ≥ 0.10 (probability distribution difference)
-- **Adjusted Rand Index** ≥ 0.80 (clustering stability)
+**Expected metrics:**
 
-If gates fail, personas are too similar. Retrain with more diverse data.
+| Metric | Target | Description |
+|--------|--------|-------------|
+| Spearman ρ | ≥ 0.70 | Rank correlation (ordinal data) |
+| Pearson r | ≥ 0.60 | Linear correlation |
+| MAE | < 0.50 | Mean absolute error |
+| RMSE | < 0.60 | Root mean squared error |
+| KS Similarity | ≥ 0.80 | Distribution matching (1 - KS statistic) |
+
+**View results:**
+
+```bash
+# Open interactive dashboard
+open reports/evaluation_dashboard.html
+
+# View JSON metrics
+cat reports/evaluation_results.json
+```
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# Quick tests
-make test                        # Run all tests (2-3 min)
+# Run unit tests
+pytest TESTS/test_evaluation_metrics.py -v
 
-# Specific tests
-make test-specific FILE=test_health.py
-make gate                        # Separation metrics
-make guard                       # Reason validation
-
-# Full test suite
-make all-checks                  # Everything (5-10 min)
+# Quick test of SSR inference
+python -c "from src.ssr.inference import SSRInference; \
+           ssr = SSRInference('models/ssr_reference'); \
+           print(ssr.predict('Free shipping'))"
 ```
 
 ---
 
-## 🚢 Production Deployment
+## 🚀 AWS Training
 
-### Docker
+### One-Command Pipeline
 
 ```bash
-# Build image
-make docker-build
-
-# Run container
-make docker-run
-
-# Access API at http://localhost:8000
+bash scripts/aws/train_complete_pipeline.sh --auto-shutdown
 ```
 
-### Manual Deployment
+**What it does:**
+
+1. Downloads OPeRA dataset
+2. Preprocesses & aligns sequences
+3. Discovers personas (UMAP + HDBSCAN + GPT-4o)
+4. Trains SSR model
+5. Evaluates on test set
+6. Syncs to S3
+7. Auto-shuts down instance
+
+**Cost:** ~$0.50 (g5.xlarge spot @ $0.35/hr for ~1.5 hours)
+
+### Download Results
 
 ```bash
-# On production server
-git clone https://github.com/aniketm-dl/mvp_v1.0.git
-cd mvp_v1.0
-
-# Download trained models
-export TRAINING_S3_BUCKET=your-bucket
-make download
-
-# Start production server
-make serve-prod
-
-# Or use systemd, supervisor, etc.
+aws s3 sync s3://$TRAINING_S3_BUCKET/models/ models/
+aws s3 sync s3://$TRAINING_S3_BUCKET/reports/ reports/
 ```
 
 ---
 
 ## 📚 Documentation
 
-- **[AWS Setup Guide](docs/AWS_SETUP.md)** - Complete AWS account setup
-- **[Training Guide](docs/TRAINING.md)** - Detailed training instructions
-- **[API Documentation](docs/API.md)** - API endpoints and examples
-- **[Architecture](docs/ARCHITECTURE.md)** - System design and components
+- **[Quick Start (Local)](QUICKSTART.md)** - Step-by-step local setup
+- **[Quick Start (AWS)](QUICKSTART_AWS.md)** - AWS cloud training
+- **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)** - Complete technical docs
+- **[AWS Setup Guide](AWS_SSR_TRAINING_GUIDE.md)** - Detailed AWS instructions
+- **[Complete Specification](docs/mvp_scope.md)** - Full system spec
 
 ---
 
-## 🤝 Contributing
+## 🔧 Configuration
 
-We welcome contributions! Areas to improve:
+Key configuration files:
 
-1. **New datasets**: Implement `BaseDataset` for Amazon, Shopify, etc.
-2. **Better personas**: Improve persona discovery algorithms
-3. **Faster training**: Optimize LoRA configuration
-4. **Web UI**: Build interactive dashboard
-5. **Model evaluation**: Better separation metrics
+```
+CONFIGS/
+├── opera/            # OPeRA dataset configs
+└── ssr/              # SSR model configs (if created)
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+---
+
+## ⚡ Performance
+
+| Metric | Value |
+|--------|-------|
+| **Inference time** | <50ms |
+| **Training time (local)** | ~2 hours |
+| **Training time (AWS)** | ~1.5 hours |
+| **Training cost (AWS)** | ~$0.50 |
+| **Model size** | ~90MB |
+| **Personas discovered** | 8-12 |
+| **Test accuracy** | Spearman ≥ 0.70 |
+
+---
+
+## 🤝 Legacy System
+
+This project supersedes a previous LLM Twin Simulator system.
+
+For the legacy system (Mistral-7B + LoRA adapters), see the **`archive`** branch:
+
+```bash
+git checkout archive
+cat ARCHIVE_README.md
+```
+
+**Key differences:**
+
+| Feature | Legacy LLM Twin | OPeRA-SSR (Current) |
+|---------|-----------------|---------------------|
+| Personas | Hand-crafted | Data-driven from OPeRA |
+| Model | Mistral-7B + LoRA | sentence-transformers |
+| Inference | 100-500ms | <50ms |
+| Training | GPU required | CPU/GPU optional |
+| Cost | ~$1/training | ~$0.50/training |
+| Accuracy | Qualitative | Quantitative (KS ≥ 0.80) |
+
+---
+
+## 🆘 Troubleshooting
+
+### "OPENAI_API_KEY not set"
+
+```bash
+export OPENAI_API_KEY='your-key-here'
+```
+
+### "HuggingFace dataset not found"
+
+Retry download:
+```bash
+python scripts/01_download_opera.py --force
+```
+
+### "Correlation below target"
+
+Train longer or use larger model:
+```bash
+python scripts/04_train_ssr.py \
+  --embedding-epochs 15 \
+  --regression-epochs 30 \
+  --base-model sentence-transformers/all-mpnet-base-v2
+```
+
+### "Silhouette score too low"
+
+Adjust clustering parameters:
+```bash
+python scripts/03_discover_personas.py --min-cluster-size 30
+```
+
+---
+
+## 📞 Support
+
+- **Documentation:** [docs/](docs/)
+- **GitHub Issues:** https://github.com/aniketm-dl/mvp_v1.0/issues
+- **Email:** support@darpanlabs.com
 
 ---
 
@@ -442,77 +470,6 @@ MIT License - see [LICENSE](LICENSE)
 
 ---
 
-## 🆘 Troubleshooting
-
-### "CUDA out of memory"
-
-```bash
-# Use smaller batch size or larger GPU
-# Edit scripts/train_llm_persona_sft.py:
-# per_device_train_batch_size=1
-# gradient_accumulation_steps=8
-
-# Or use g5.xlarge instead of g4dn.xlarge
-```
-
-### "AWS credentials not found"
-
-```bash
-aws configure
-# Enter your Access Key ID and Secret Access Key
-```
-
-### "S3 sync failed"
-
-```bash
-# Check bucket permissions
-aws s3 ls s3://your-bucket/
-
-# Manually sync
-aws s3 sync artifacts/llm_adapters/ s3://your-bucket/trained_adapters/
-```
-
-### "Training is slow"
-
-```bash
-# Check GPU usage (should be 80-100%)
-nvidia-smi
-
-# Verify CUDA is available
-python -c "import torch; print(torch.cuda.is_available())"
-
-# Use faster GPU: g5.xlarge instead of g4dn.xlarge
-```
-
-### "Spot instance terminated"
-
-Spot instances can be reclaimed. Solutions:
-- Set higher max spot price
-- Use on-demand instances (more expensive)
-- Enable auto-resume from S3 backups
-
----
-
-## 🎓 What's Next?
-
-After successful training:
-
-1. **Test locally**: `make chat`
-2. **Deploy API**: `make serve`
-3. **Integrate with app**: See [API docs](docs/API.md)
-4. **Monitor performance**: `make metrics`
-5. **Iterate on personas**: Refine based on feedback
-
----
-
-## 📞 Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/aniketm-dl/mvp_v1.0/issues)
-- **Email**: support@darpanlabs.com
-
----
-
 **Built with ❤️ by Darpan Labs**
 
-*Making AI personas accessible, affordable, and production-ready.*
+*Making behavioral prediction accessible, accurate, and affordable.*
