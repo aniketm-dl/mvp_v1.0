@@ -1,0 +1,536 @@
+# 🎯 Persona Evaluation Metrics Configuration
+# 
+# This file defines comprehensive metrics for evaluating digital twin personas
+# across development sprints. Used by automated assessment and comparison tools.
+
+version: "1.0.0"
+last_updated: "2024-10-16"
+
+# ============================================================================
+# CORE QUALITY METRICS
+# ============================================================================
+
+quality_metrics:
+  
+  # 1. PERSONA CONSISTENCY
+  # Measures how consistently the persona maintains its character
+  persona_consistency:
+    description: "How well the persona maintains its defined characteristics across conversations"
+    weight: 0.25
+    sub_metrics:
+      - name: "trait_alignment"
+        description: "Alignment with OCEAN personality scores"
+        measurement: "cosine_similarity"
+        threshold: 0.85
+        
+      - name: "value_adherence"
+        description: "Consistency with shopping_values (price_sensitive, quality_focused, etc.)"
+        measurement: "keyword_match_rate"
+        threshold: 0.80
+        
+      - name: "behavior_consistency"
+        description: "Matches typical_behavior patterns"
+        measurement: "pattern_detection"
+        threshold: 0.75
+        
+      - name: "constraint_compliance"
+        description: "Follows decision_constraints"
+        measurement: "rule_adherence_rate"
+        threshold: 0.90
+    
+    evaluation_method: "automated_prompt_testing"
+    
+  # 2. RESPONSE QUALITY
+  # Measures the quality of generated responses
+  response_quality:
+    description: "Overall quality of persona responses"
+    weight: 0.25
+    sub_metrics:
+      - name: "coherence"
+        description: "Logical flow and coherence of responses"
+        measurement: "perplexity_score"
+        threshold: "< 50"
+        
+      - name: "relevance"
+        description: "Relevance to user query"
+        measurement: "semantic_similarity"
+        threshold: 0.80
+        
+      - name: "naturalness"
+        description: "Human-like language quality"
+        measurement: "fluency_score"
+        threshold: 0.85
+        
+      - name: "helpfulness"
+        description: "Provides actionable shopping advice"
+        measurement: "action_item_extraction"
+        threshold: 0.70
+        
+      - name: "length_appropriateness"
+        description: "Response length matches query complexity"
+        measurement: "length_ratio"
+        threshold: "0.5-2.0"
+    
+    evaluation_method: "llm_as_judge + automated_metrics"
+    
+  # 3. DIFFERENTIATION
+  # Measures how distinct personas are from each other
+  persona_differentiation:
+    description: "How distinguishable personas are from one another"
+    weight: 0.20
+    sub_metrics:
+      - name: "response_diversity"
+        description: "Different personas give different advice for same scenario"
+        measurement: "embedding_distance"
+        threshold: 0.50
+        
+      - name: "decision_variance"
+        description: "Personas make different purchasing decisions"
+        measurement: "decision_overlap_rate"
+        threshold: "< 0.30"
+        
+      - name: "vocabulary_uniqueness"
+        description: "Personas use distinctive language"
+        measurement: "tf_idf_divergence"
+        threshold: 0.60
+        
+      - name: "style_distinction"
+        description: "Writing style differences"
+        measurement: "stylometric_analysis"
+        threshold: 0.55
+    
+    evaluation_method: "cross_persona_comparison"
+    
+  # 4. DOMAIN EXPERTISE
+  # Measures shopping/e-commerce knowledge
+  domain_expertise:
+    description: "Knowledge of shopping, products, and e-commerce"
+    weight: 0.15
+    sub_metrics:
+      - name: "product_knowledge"
+        description: "Understanding of product categories and features"
+        measurement: "factual_accuracy"
+        threshold: 0.90
+        
+      - name: "shopping_strategies"
+        description: "Provides valid shopping strategies"
+        measurement: "strategy_validity_rate"
+        threshold: 0.85
+        
+      - name: "price_awareness"
+        description: "Reasonable price expectations"
+        measurement: "price_plausibility"
+        threshold: 0.80
+        
+      - name: "trend_awareness"
+        description: "Knowledge of shopping trends"
+        measurement: "trend_mention_accuracy"
+        threshold: 0.75
+    
+    evaluation_method: "knowledge_probing"
+    
+  # 5. MULTI-TURN COHERENCE
+  # Measures conversation continuity
+  multi_turn_coherence:
+    description: "Maintains context and consistency across conversation turns"
+    weight: 0.15
+    sub_metrics:
+      - name: "context_retention"
+        description: "Remembers previous conversation points"
+        measurement: "context_reference_rate"
+        threshold: 0.80
+        
+      - name: "topic_continuity"
+        description: "Stays on topic across turns"
+        measurement: "topic_drift_score"
+        threshold: "< 0.25"
+        
+      - name: "preference_memory"
+        description: "Remembers user preferences mentioned earlier"
+        measurement: "preference_recall_rate"
+        threshold: 0.85
+        
+      - name: "contradiction_avoidance"
+        description: "Doesn't contradict previous statements"
+        measurement: "contradiction_detection"
+        threshold: "< 0.05"
+    
+    evaluation_method: "multi_turn_conversation_testing"
+
+# ============================================================================
+# TECHNICAL PERFORMANCE METRICS
+# ============================================================================
+
+technical_metrics:
+  
+  inference_performance:
+    description: "Technical performance during inference"
+    weight: 0.10
+    sub_metrics:
+      - name: "latency"
+        description: "Response generation time"
+        measurement: "seconds"
+        threshold: "< 2.0"
+        
+      - name: "throughput"
+        description: "Tokens per second"
+        measurement: "tokens/sec"
+        threshold: "> 50"
+        
+      - name: "memory_usage"
+        description: "GPU/RAM consumption"
+        measurement: "GB"
+        threshold: "< 8.0"
+        
+      - name: "error_rate"
+        description: "Generation failures"
+        measurement: "percentage"
+        threshold: "< 0.01"
+  
+  model_efficiency:
+    description: "Model size and efficiency"
+    weight: 0.05
+    sub_metrics:
+      - name: "adapter_size"
+        description: "LoRA adapter size"
+        measurement: "MB"
+        threshold: "< 100"
+        
+      - name: "load_time"
+        description: "Model loading time"
+        measurement: "seconds"
+        threshold: "< 5.0"
+        
+      - name: "parameter_efficiency"
+        description: "Trainable parameters"
+        measurement: "count"
+        threshold: "< 10M"
+
+# ============================================================================
+# TRAINING QUALITY METRICS
+# ============================================================================
+
+training_metrics:
+  
+  convergence:
+    description: "Training convergence quality"
+    weight: 0.15
+    sub_metrics:
+      - name: "final_loss"
+        description: "Final training loss"
+        measurement: "float"
+        threshold: "< 1.0"
+        
+      - name: "validation_loss"
+        description: "Validation set loss"
+        measurement: "float"
+        threshold: "< 1.2"
+        
+      - name: "convergence_stability"
+        description: "Loss stability in final epochs"
+        measurement: "std_dev"
+        threshold: "< 0.05"
+        
+      - name: "overfitting_margin"
+        description: "Gap between train and validation loss"
+        measurement: "difference"
+        threshold: "< 0.3"
+  
+  data_efficiency:
+    description: "Efficiency of data usage"
+    weight: 0.10
+    sub_metrics:
+      - name: "samples_per_persona"
+        description: "Training examples per persona"
+        measurement: "count"
+        target: 200
+        
+      - name: "epochs_to_converge"
+        description: "Epochs needed for convergence"
+        measurement: "count"
+        threshold: "< 10"
+        
+      - name: "training_time"
+        description: "Total training time per persona"
+        measurement: "minutes"
+        threshold: "< 30"
+
+# ============================================================================
+# BUSINESS IMPACT METRICS
+# ============================================================================
+
+business_metrics:
+  
+  user_satisfaction:
+    description: "Simulated user satisfaction with persona interactions"
+    weight: 0.10
+    sub_metrics:
+      - name: "recommendation_acceptance"
+        description: "Rate of following persona advice"
+        measurement: "percentage"
+        threshold: "> 0.70"
+        
+      - name: "conversation_completion"
+        description: "Conversations reaching natural conclusion"
+        measurement: "percentage"
+        threshold: "> 0.85"
+        
+      - name: "perceived_helpfulness"
+        description: "LLM-judged helpfulness"
+        measurement: "rating_1_to_5"
+        threshold: "> 4.0"
+  
+  personalization_effectiveness:
+    description: "How well personas achieve personalization"
+    weight: 0.10
+    sub_metrics:
+      - name: "preference_alignment"
+        description: "Recommendations match persona preferences"
+        measurement: "alignment_score"
+        threshold: "> 0.80"
+        
+      - name: "customization_depth"
+        description: "Depth of personalized advice"
+        measurement: "specificity_score"
+        threshold: "> 0.75"
+
+# ============================================================================
+# TEST SCENARIOS
+# ============================================================================
+
+test_scenarios:
+  
+  # Standard test prompts for consistent evaluation
+  standard_prompts:
+    - category: "product_recommendation"
+      prompt: "I'm looking for a new laptop for work. What should I consider?"
+      expected_variations:
+        - persona: "bargain_hunter"
+          key_points: ["price comparison", "deals", "refurbished"]
+        - persona: "premium_loyalist"
+          key_points: ["brand reputation", "quality", "warranty"]
+        - persona: "research_oriented"
+          key_points: ["specifications", "reviews", "comparisons"]
+    
+    - category: "purchase_decision"
+      prompt: "Should I buy this $800 smartphone now or wait for Black Friday?"
+      expected_variations:
+        - persona: "bargain_hunter"
+          recommendation: "wait"
+          reasoning: ["better deals", "patience pays"]
+        - persona: "impulse_buyer"
+          recommendation: "buy_now"
+          reasoning: ["instant gratification", "want it now"]
+        - persona: "research_oriented"
+          recommendation: "analyze"
+          reasoning: ["historical prices", "deal probability"]
+    
+    - category: "multi_turn_conversation"
+      turns:
+        - user: "I need new running shoes."
+          persona_should: ["ask about needs", "gather preferences"]
+        - user: "I run 3-4 times a week, mostly on roads."
+          persona_should: ["provide specific recommendations", "consider usage"]
+        - user: "My budget is $150."
+          persona_should: ["filter by price", "suggest options"]
+    
+    - category: "brand_preference"
+      prompt: "Nike or Adidas running shoes?"
+      expected_variations:
+        - persona: "premium_loyalist"
+          approach: "brand_comparison"
+        - persona: "bargain_hunter"
+          approach: "price_focus"
+        - persona: "eco_conscious"
+          approach: "sustainability_check"
+    
+    - category: "urgency_handling"
+      prompt: "This deal ends in 2 hours! Should I buy?"
+      expected_variations:
+        - persona: "impulse_buyer"
+          sentiment: "positive_urgency"
+        - persona: "research_oriented"
+          sentiment: "skeptical_analysis"
+        - persona: "minimalist"
+          sentiment: "need_assessment"
+
+  # Stress test scenarios
+  stress_tests:
+    - name: "ambiguous_query"
+      prompt: "I need something."
+      test: "handles_vagueness"
+      
+    - name: "conflicting_requirements"
+      prompt: "I want the highest quality but also the cheapest price."
+      test: "resolves_conflicts"
+      
+    - name: "out_of_domain"
+      prompt: "What's the weather like today?"
+      test: "stays_in_domain"
+      
+    - name: "very_long_conversation"
+      turns: 20
+      test: "maintains_coherence"
+
+# ============================================================================
+# COMPARISON FRAMEWORKS
+# ============================================================================
+
+version_comparison:
+  
+  # How to compare versions
+  comparison_dimensions:
+    - dimension: "quality_improvement"
+      metrics: ["persona_consistency", "response_quality"]
+      direction: "higher_is_better"
+      
+    - dimension: "efficiency_gain"
+      metrics: ["latency", "memory_usage", "training_time"]
+      direction: "lower_is_better"
+      
+    - dimension: "differentiation_improvement"
+      metrics: ["persona_differentiation"]
+      direction: "higher_is_better"
+      
+    - dimension: "technical_stability"
+      metrics: ["convergence", "error_rate"]
+      direction: "better_is_stable"
+  
+  # Statistical significance testing
+  significance_testing:
+    enabled: true
+    method: "paired_t_test"
+    confidence_level: 0.95
+    minimum_samples: 30
+  
+  # Regression detection
+  regression_thresholds:
+    critical: -0.10  # >10% drop in any core metric
+    major: -0.05     # >5% drop in any core metric
+    minor: -0.02     # >2% drop in any core metric
+
+# ============================================================================
+# REPORTING CONFIGURATION
+# ============================================================================
+
+reporting:
+  
+  # Report formats
+  output_formats:
+    - "json"        # Machine-readable
+    - "markdown"    # Human-readable
+    - "html"        # Interactive dashboard
+  
+  # Report sections
+  sections:
+    - name: "executive_summary"
+      include: ["overall_score", "key_improvements", "regressions", "recommendations"]
+      
+    - name: "detailed_metrics"
+      include: ["all_metrics", "per_persona_breakdown", "statistical_tests"]
+      
+    - name: "version_comparison"
+      include: ["side_by_side", "improvement_trends", "regression_analysis"]
+      
+    - name: "persona_profiles"
+      include: ["per_persona_scores", "example_responses", "failure_cases"]
+      
+    - name: "technical_performance"
+      include: ["latency_distribution", "resource_usage", "error_analysis"]
+      
+    - name: "recommendations"
+      include: ["improvement_suggestions", "next_sprint_focus", "risk_areas"]
+  
+  # Visualization
+  visualizations:
+    - type: "radar_chart"
+      metrics: ["persona_consistency", "response_quality", "differentiation", "domain_expertise", "multi_turn_coherence"]
+      
+    - type: "heatmap"
+      data: "persona_confusion_matrix"
+      
+    - type: "line_chart"
+      data: "metric_trends_across_versions"
+      
+    - type: "bar_chart"
+      data: "per_persona_scores"
+
+# ============================================================================
+# AUTOMATION CONFIGURATION
+# ============================================================================
+
+automation:
+  
+  # When to run automated evaluation
+  triggers:
+    - event: "training_complete"
+      action: "full_evaluation"
+      
+    - event: "model_download"
+      action: "quick_smoke_test"
+      
+    - event: "version_tag"
+      action: "comparison_report"
+  
+  # Notification settings
+  notifications:
+    enabled: true
+    channels: ["console", "file"]
+    alert_on:
+      - "critical_regression"
+      - "evaluation_complete"
+      - "comparison_ready"
+  
+  # Continuous monitoring
+  continuous_monitoring:
+    enabled: false  # Enable for production
+    interval_minutes: 60
+    metrics_to_track: ["error_rate", "latency", "throughput"]
+
+# ============================================================================
+# QUALITY GATES
+# ============================================================================
+
+quality_gates:
+  
+  # Gates for accepting a new version
+  acceptance_criteria:
+    - gate: "minimum_quality"
+      description: "All core metrics meet minimum thresholds"
+      threshold: "all_pass"
+      
+    - gate: "no_critical_regression"
+      description: "No metric drops >10% from previous version"
+      threshold: "zero_critical_regressions"
+      
+    - gate: "differentiation_maintained"
+      description: "Personas remain distinguishable"
+      threshold: "differentiation_score > 0.50"
+      
+    - gate: "technical_stability"
+      description: "Error rate and latency within bounds"
+      threshold: "error_rate < 0.01 AND latency < 2.0"
+  
+  # Severity levels
+  failure_severity:
+    blocker: "Cannot deploy - critical functionality broken"
+    critical: "Should not deploy - major issues present"
+    major: "Deploy with caution - notable problems exist"
+    minor: "Deploy OK - minor improvements needed"
+
+# ============================================================================
+# METADATA
+# ============================================================================
+
+metadata:
+  authors: ["Darpan Labs Team"]
+  purpose: "Comprehensive persona evaluation across development sprints"
+  related_docs:
+    - "trained_models/README.md"
+    - "docs/TRAINING.md"
+    - "PHASE_3E3_DYNAMIC_COMPLETE.md"
+  tools:
+    - "scripts/persona_assessment.py"
+    - "scripts/compare_versions.py"
+    - "scripts/generate_sprint_report.py"
+

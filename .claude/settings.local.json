@@ -85,7 +85,8 @@
       "Bash(ssh:*)",
       "Bash(aws ec2-instance-connect send-ssh-public-key:*)",
       "Bash(ssh-keygen:*)",
-      "Bash(aws ssm send-command:*)"
+      "Bash(aws ssm send-command:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
