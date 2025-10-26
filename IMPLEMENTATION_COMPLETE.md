@@ -135,7 +135,7 @@ streamlit run src/app/main.py
 **Created:**
 - `scripts/aws/train_complete_pipeline.sh` - One-command training
 - `scripts/aws/upload_and_train.sh` - S3 sync helper
-- `scripts/aws/complete_training_setup.sh` - Instance setup
+- `scripts/aws/setup_training_instance.sh` - Instance setup
 
 **Key Achievements:**
 - ✅ One-command end-to-end training
@@ -545,4 +545,3 @@ For detailed information, see:
 - `IMPLEMENTATION_SUMMARY.md` - Complete technical documentation
 - `QUICKSTART.md` - Getting started guide
 - `docs/mvp_scope.md` - Original specification
-

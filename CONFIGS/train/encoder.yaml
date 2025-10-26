@@ -1,9 +1,0 @@
-model: GRU
-hidden_dim: 128
-history_len: 5
-optimizer: adam
-lr: 1e-3
-loss: cross_entropy
-outputs:
-  save_ckpt: artifacts/encoder.ckpt
-  save_embeddings: artifacts/embeddings.parquet

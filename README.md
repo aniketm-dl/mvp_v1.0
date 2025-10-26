@@ -20,17 +20,38 @@ export OPENAI_API_KEY='your-key-here'
 # 3. Download OPeRA dataset
 python scripts/01_download_opera.py
 
-# 4. Preprocess data
+# 4a. Preprocess data (human ratings only)
 python scripts/02_preprocess_opera.py
+
+# 4b. Optional: preprocess with LLM elicitation (SSR paper approach)
+#     Saves both human ratings (ssr_training_pairs.jsonl)
+#     and synthetic responses (ssr_training_pairs_llm.jsonl)
+python scripts/02b_preprocess_opera_with_llm.py \
+  --llm-provider openai \
+  --llm-model gpt-4o-mini \
+  --samples-per-prompt 2 \
+  --llm-temperature 0.5 \
+  --max-llm-sessions 250 \
+  --seed 42
 
 # 5. Discover personas
 python scripts/03_discover_personas.py --use-llm-summary
 
-# 6. Train SSR model
-python scripts/04_train_ssr.py
+# 6a. Train SSR model (human ratings)
+python scripts/04_train_ssr.py \
+  --training-pairs DATA/OPeRA/processed/ssr_training_pairs.jsonl
 
-# 7. Evaluate model
-python scripts/07_evaluate.py
+# 6b. Train SSR model with LLM responses (uses reference anchors)
+python scripts/04_train_ssr.py \
+  --training-pairs DATA/OPeRA/processed/ssr_training_pairs_llm.jsonl \
+  --use-references
+
+# 7. Evaluate model (requires OPENAI_API_KEY for anchor embeddings)
+python scripts/07_evaluate.py \
+  --ssr-model models/ssr_reference \
+  --human-data DATA/OPeRA/processed/ssr_training_pairs.jsonl \
+  --anchor-scenario persona=DATA/OPeRA/processed/ssr_training_pairs_llm.jsonl \
+  --include-regression
 
 # 8. Launch demo
 streamlit run src/app/main.py
@@ -42,8 +63,12 @@ streamlit run src/app/main.py
 export OPENAI_API_KEY='your-key-here'
 export TRAINING_S3_BUCKET='darpan-training-yourusername'
 
-bash scripts/aws/train_complete_pipeline.sh --auto-shutdown
+bash scripts/aws/train_complete_pipeline.sh --use-llm-elicitations --llm-max-samples 500 --auto-shutdown
 ```
+
+The AWS pipeline mirrors the SSR paper: it elicits two GPT-4o-mini statements per concept,
+maps them against all six anchor sets using `text-embedding-3-small`, and reports KS similarity,
+correlation attainment, and per-concept distributions.
 
 ---
 
@@ -62,7 +87,8 @@ Train a **Semantic Similarity Rating (SSR)** model that:
 1. **Discovers personas** from real user behavior (OPeRA dataset)
 2. **Predicts ratings** (1-5 Likert scale) for any scenario
 3. **Provides distributions** showing confidence and variability
-4. **Runs fast** (<50ms per prediction)
+4. **Maps persona-conditioned statements** to Likert probabilities via six anchor sets (text-embedding-3-small)
+5. **Runs fast** (<50ms per prediction)
 
 ### Example
 
@@ -99,11 +125,15 @@ print(f"Distribution: {prediction['distribution']}")
    ↓
 4. GPT-4o-mini Persona Summarization
    ↓
-5. SSR Model Training (sentence-transformers)
+5. Persona-Conditioned LLM Responses (2 samples @ T≈0.5)
    ↓
-6. Evaluation (KS Similarity, Correlations)
+6. SSR Embedding Training (sentence-transformers + reference anchors)
    ↓
-7. Streamlit Demo App
+7. Anchor-Based Mapping (text-embedding-3-small across 6 anchor sets)
+   ↓
+8. Evaluation (KS Similarity, Correlation Attainment, MAE/RMSE)
+   ↓
+9. Streamlit Demo App
 ```
 
 ### Directory Structure
@@ -118,32 +148,35 @@ mvp_v1.0/
 │   └── app/                 # Streamlit demo
 │
 ├── scripts/
-│   ├── 01_download_opera.py        # Download OPeRA from HuggingFace
-│   ├── 02_preprocess_opera.py      # Align & extract features
-│   ├── 03_discover_personas.py     # UMAP + HDBSCAN + GPT-4o
-│   ├── 04_train_ssr.py             # Train SSR model
-│   ├── 07_evaluate.py              # Evaluate on test set
+│   ├── 01_download_opera.py              # Download OPeRA from HuggingFace
+│   ├── 02_preprocess_opera.py            # Align & extract features
+│   ├── 02b_preprocess_opera_with_llm.py  # Optional LLM elicitation
+│   ├── 03_discover_personas.py           # UMAP + HDBSCAN + GPT-4o
+│   ├── 04_train_ssr.py                   # Train SSR model
+│   ├── 07_evaluate.py                    # Evaluate on test set
 │   └── aws/
-│       └── train_complete_pipeline.sh  # One-command AWS training
+│       └── train_complete_pipeline.sh    # One-command AWS training
 │
 ├── DATA/OPeRA/
 │   ├── raw/                 # Downloaded from HuggingFace
 │   └── processed/           # Aligned sequences, features, pairs
 │
-├── models/
-│   ├── ssr_reference/       # Trained SSR model
-│   └── persona_profiles.json  # Discovered personas
-│
-├── reports/
-│   ├── evaluation_results.json        # Metrics
-│   └── evaluation_dashboard.html     # Interactive dashboard
-│
-└── docs/
-    ├── AWS_SETUP.md         # AWS account setup
-    ├── TRAINING.md          # Training guide
-    ├── EVALUATION.md        # Evaluation metrics
-    └── mvp_scope.md         # Complete specification
+├── models/                  # Generated (SSR model + personas)
+├── reports/                 # Generated (evaluation artefacts)
+├── docs/                    # Additional references & design notes
+└── Makefile                 # Convenience commands (see `make help`)
 ```
+
+### Evaluation Outputs & Ablations
+
+- `scenario_summary.csv` — per-scenario metrics (Spearman/Pearson, KS, MAE/RMSE, attainment).
+- `concept_evaluation_<scenario>.csv` — human vs synthetic pmfs for each concept.
+- `pmf_summary_<scenario>.csv` — averaged Likert pmf across all concepts.
+- `subgroup_metrics_<scenario>.csv` — age/gender/income breakdowns comparing predictions with human means.
+- `--anchor-scenario label=path` toggles anchor-based variants (e.g., persona ablations, alternate LLM prompts).
+- `--flr-scenario label=path` adds FLR baselines where JSONL contains `flr_rating` fields.
+- `--include-regression` includes the regression-head baseline alongside anchor runs.
+- `evaluation_results.json` logs anchor version/hash, random seeds, and per-call LLM parameters for reproducibility.
 
 ---
 
@@ -197,16 +230,29 @@ python scripts/01_download_opera.py
 # Preprocess & align data (~10-15 min)
 python scripts/02_preprocess_opera.py
 
+# Optional: elicit persona-conditioned responses (saves *_llm.jsonl)
+python scripts/02b_preprocess_opera_with_llm.py \
+  --llm-provider openai \
+  --samples-per-prompt 2 \
+  --llm-temperature 0.5 \
+  --seed 42
+
 # Discover personas (~15-20 min)
 python scripts/03_discover_personas.py --use-llm-summary
 
 # Train SSR model (~20-30 min)
 python scripts/04_train_ssr.py \
   --embedding-epochs 10 \
-  --regression-epochs 20
+  --regression-epochs 20 \
+  --training-pairs DATA/OPeRA/processed/ssr_training_pairs_llm.jsonl \
+  --use-references
 
 # Evaluate model (~5-10 min)
-python scripts/07_evaluate.py
+python scripts/07_evaluate.py \
+  --ssr-model models/ssr_reference \
+  --human-data DATA/OPeRA/processed/ssr_training_pairs.jsonl \
+  --anchor-scenario persona=DATA/OPeRA/processed/ssr_training_pairs_llm.jsonl \
+  --include-regression
 
 # Launch demo
 streamlit run src/app/main.py
@@ -338,7 +384,10 @@ python -c "from src.ssr.inference import SSRInference; \
 ### One-Command Pipeline
 
 ```bash
-bash scripts/aws/train_complete_pipeline.sh --auto-shutdown
+bash scripts/aws/train_complete_pipeline.sh \
+  --use-llm-elicitations \
+  --llm-max-samples 500 \
+  --auto-shutdown
 ```
 
 **What it does:**
@@ -374,13 +423,19 @@ aws s3 sync s3://$TRAINING_S3_BUCKET/reports/ reports/
 
 ## 🔧 Configuration
 
-Key configuration files:
+Most behavior is controlled via CLI flags rather than static config files.
 
-```
-CONFIGS/
-├── opera/            # OPeRA dataset configs
-└── ssr/              # SSR model configs (if created)
-```
+- `scripts/02b_preprocess_opera_with_llm.py` – LLM elicitation (`--llm-provider`, `--samples-per-prompt`, `--max-llm-sessions`)
+- `scripts/04_train_ssr.py` – epochs, batch size, `--use-references`
+- `scripts/aws/train_complete_pipeline.sh` – `--use-llm-elicitations`, `--llm-max-samples`, `--auto-shutdown`
+
+Environment variables to set:
+
+| Variable | Purpose |
+|----------|---------|
+| `OPENAI_API_KEY` | Required for persona summaries and optional LLM elicitation |
+| `HF_TOKEN` | Speeds up authenticated downloads from HuggingFace (optional) |
+| `TRAINING_S3_BUCKET` | S3 bucket for AWS pipeline artefacts |
 
 ---
 

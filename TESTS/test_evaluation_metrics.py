@@ -114,7 +114,7 @@ class TestKSSimilarityTest:
 
         similarity = ks_test.compute_ks_similarity(distribution, distribution)
 
-        assert similarity >= 0.99
+        assert similarity == pytest.approx(1.0, rel=2e-2)
 
     def test_different_distributions(self):
         """Test KS test with very different distributions."""

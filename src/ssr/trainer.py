@@ -125,29 +125,59 @@ class SSRTrainer:
         return train_pairs, val_pairs
 
     def prepare_contrastive_data(
-        self, pairs: List[Dict[str, Any]]
+        self, pairs: List[Dict[str, Any]], use_references: bool = True
     ) -> List[InputExample]:
         """
-        Prepare data for contrastive learning.
+        Prepare data for contrastive learning per SSR methodology.
 
-        Creates (text1, text2, score) triplets for sentence-transformers.
+        Creates (LLM_response, reference_statement) pairs for training.
+        If use_references=False, falls back to (stimulus, stimulus) for compatibility.
+
+        Args:
+            pairs: List of training pairs with "llm_response"/"stimulus_text" and "likert_score"
+            use_references: Whether to use reference statements (SSR paper approach)
+
+        Returns:
+            List of InputExample for sentence-transformers training
         """
+        from src.ssr.reference_statements import ReferenceStatementSets
+
         examples = []
 
         for pair in pairs:
-            # Normalize Likert score to [0, 1] for contrastive loss
             likert_score = pair["likert_score"]
-            normalized_score = (likert_score - 1) / 4.0  # 1-5 -> 0-1
 
-            # Create input example (stimulus text as both anchor and positive)
-            # In real training, we'd need persona text representation
-            # For now, use stimulus text with score as similarity
-            example = InputExample(
-                texts=[pair["stimulus_text"], pair["stimulus_text"]],
-                label=normalized_score,
-            )
+            if use_references and "llm_response" in pair:
+                llm_response = pair["llm_response"]
+                for set_name in ReferenceStatementSets.get_set_names():
+                    reference_statement = ReferenceStatementSets.get_statement_for_rating(
+                        set_name, likert_score
+                    )
+
+                    examples.append(
+                        InputExample(
+                            texts=[llm_response, reference_statement],
+                            label=1.0,
+                        )
+                    )
+
+                continue
+            else:
+                # Fallback: Original simplified approach
+                # Use stimulus text with normalized Likert as similarity score
+                normalized_score = (likert_score - 1) / 4.0  # 1-5 -> 0-1
+                stimulus_text = pair.get("stimulus_text", pair.get("llm_response", ""))
+
+                example = InputExample(
+                    texts=[stimulus_text, stimulus_text],
+                    label=normalized_score,
+                )
             examples.append(example)
 
+        logger.info(
+            f"Prepared {len(examples)} contrastive examples "
+            f"(use_references={use_references})"
+        )
         return examples
 
     def train_embedding_model(
@@ -158,6 +188,7 @@ class SSRTrainer:
         batch_size: int = 32,
         learning_rate: float = 2e-5,
         warmup_steps: int = 100,
+        use_references: bool = False,
     ) -> Dict[str, float]:
         """
         Fine-tune sentence-transformers model on contrastive task.
@@ -169,6 +200,7 @@ class SSRTrainer:
             batch_size: Batch size
             learning_rate: Learning rate
             warmup_steps: Warmup steps for scheduler
+            use_references: Use reference statement sets (SSR paper methodology)
 
         Returns:
             Training metrics
@@ -178,7 +210,7 @@ class SSRTrainer:
         logger.info("=" * 80)
 
         # Prepare contrastive data
-        train_examples = self.prepare_contrastive_data(train_pairs)
+        train_examples = self.prepare_contrastive_data(train_pairs, use_references=use_references)
         train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=batch_size)
 
         # Define loss (CosineSimilarityLoss for regression-style similarity)
@@ -311,8 +343,14 @@ class SSRTrainer:
         Returns:
             (embeddings, labels) where labels are 0-indexed (0-4 for Likert 1-5)
         """
-        # Extract stimulus texts
-        texts = [pair["stimulus_text"] for pair in pairs]
+        # Prefer persona-conditioned LLM responses when available; otherwise fall back to stimuli
+        texts = []
+        for pair in pairs:
+            llm_response = pair.get("llm_response")
+            if llm_response:
+                texts.append(llm_response)
+            else:
+                texts.append(pair.get("stimulus_text", ""))
 
         # Encode texts
         embeddings = self.embedder.encode_texts(texts, show_progress_bar=True)

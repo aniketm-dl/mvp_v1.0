@@ -91,7 +91,7 @@
 - `scripts/04_train_ssr.py` - Train SSR model
 - `scripts/07_evaluate.py` - Evaluate on test set
 - `scripts/aws/train_complete_pipeline.sh` - One-command AWS training
-- `scripts/aws/complete_training_setup.sh` - AWS instance setup
+- `scripts/aws/setup_training_instance.sh` - AWS instance setup
 - `scripts/aws/upload_and_train.sh` - S3 sync helper
 
 ✅ **Documentation (4 core files):**
@@ -402,4 +402,3 @@ make serve  # or python darpan.py chat
 **Date:** October 26, 2025
 **Branches affected:** `archive` (created), `mvp_opera` (cleaned)
 **Total deletions:** 389 files, ~9M lines removed
-

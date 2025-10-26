@@ -4,37 +4,25 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
   "torch",
-  "pytorch-lightning",
-  "hydra-core",
-  "polars",
-  "duckdb",
-  "faiss-cpu",
-  "fastapi",
-  "uvicorn",
-  "pydantic>=2",
-  "scikit-learn",
   "numpy",
   "pandas",
-  "pyyaml",
-  "typer",
-  "rich",
-  "pytest",
-  "httpx",
-  "transformers>=4.42.0",
-  "peft>=0.10.0",
-  "accelerate>=0.30.0",
-  "datasets>=2.20.0",
-  "hdbscan>=0.8.33",
-  "igraph>=0.11.0",
-  "leidenalg>=0.10.0",
+  "scipy>=1.11.0",
+  "scikit-learn",
   "pyarrow>=14.0.0",
-  "umap-learn>=0.5.5",
-  "tqdm>=4.66.0",
+  "pydantic>=2",
   "sentence-transformers>=2.7.0",
-  "streamlit>=1.32.0",
-  "plotly>=5.20.0",
+  "umap-learn>=0.5.5",
+  "hdbscan>=0.8.33",
+  "tqdm>=4.66.0",
+  "rich",
+  "huggingface-hub>=0.23.0",
+  "datasets>=2.20.0",
+  "pyyaml",
   "beautifulsoup4>=4.12.0",
-  "scipy>=1.11.0"
+  "plotly>=5.20.0",
+  "streamlit>=1.32.0",
+  "openai>=1.0.0",
+  "pytest"
 ]
 
 [tool.black]
@@ -54,3 +42,7 @@ python_functions = ["test_*"]
 python_version = "3.11"
 ignore_missing_imports = true
 strict_optional = true
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

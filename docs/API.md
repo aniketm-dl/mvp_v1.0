@@ -1,57 +1,103 @@
-# API Schemas (Pydantic v2)
+# SSR Service – Draft API Design
 
-CTAStep (internal)
-user_id: str
-session_id: str
-ts: datetime
-context: dict  // page_type, category, price stats, visible products, url mask
-task: choose_product | refine | stop | nav_action
-action_id: str
+The current MVP ships with a Streamlit demo and direct Python interfaces.  
+This note captures the shape of the future HTTP API so that downstream teams can plan integrations.  
+Implementation **status:** not started.
 
-RecommendRequest
-cta_seq: list[CTAStep]
-context_now: dict
-task: same literals as CTAStep.task
-topk: int
-explain: bool
+## Guiding Principles
 
-RecommendResponse
-topN: list[{id, p}]
-twin_weights: dict[twin_id, float]
-primary_twin: {id, label}
-why: str | null
+- Thin FastAPI layer that wraps `src.ssr.inference.SSRInference`
+- Synchronous JSON endpoints, no authentication baked in (to be handled by gateway)
+- Responses expose both point estimates and full Likert distributions
+- Strict request validation via Pydantic models
 
-ScenarioPatch
-See SPECS. Fields outside ALLOWED_MUTABLES → 422.
+## Proposed Endpoints
 
-SimulateRequest
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/predict` | Score a single scenario |
+| `POST` | `/predict_batch` | Score multiple scenarios in one call |
+| `POST` | `/compare` | Compare variants against a baseline scenario |
+| `GET`  | `/personas` | Return discovered persona metadata |
+| `GET`  | `/health` | Lightweight readiness probe |
+
+### `/predict`
+
+```jsonc
+POST /predict
 {
-  "cta_seq": [CTAStep] | null,
-  "z_or_user_id": "optional",
-  "task": "choose_product" | "refine",
-  "scenarios": [ScenarioPatch],
-  "topk": 5,
-  "explain": "none" | "blend" | "per_twin",
-  "deterministic": true,
-  "seed": 17,
-  "mixture": {"auto_from_cta": true} | {"weights": {"k3":0.6,"k7":0.4}}
+  "stimulus": "20% off laptops this weekend",
+  "persona_ids": ["core_all"],        // optional, defaults to all personas
+  "return_distribution": true
 }
+```
 
-SimulateResponse
+```jsonc
+200 OK
 {
-  "by_scenario": [{
-    "variant_id": "V1",
-    "topN": [{"id":"A1","p":0.42}],
-    "why": "Wants SPF 50 under 800.",
-    "by_twin": [{"twin_id":"k3","picks":[{"id":"A1","p":0.71}],"why":"Hunts deals under 800."}],
-    "deltas": {"A1": +0.07, "A2": -0.05}
-  }],
-  "twin_weights": {"k3":0.6, "k7":0.4},
-  "primary_twin": {"id":"k3","label":"Deal-seeking Explorer"},
-  "sim_config": {"run_id":"...", "seed":17}
+  "stimulus": "20% off laptops this weekend",
+  "prediction": {
+    "mean": 4.12,
+    "std": 0.77,
+    "mode": 4,
+    "distribution": [0.03, 0.07, 0.21, 0.47, 0.22]
+  },
+  "personas": [
+    {"id": "persona_01", "weight": 0.28},
+    {"id": "persona_02", "weight": 0.19},
+    {"id": "persona_03", "weight": 0.53}
+  ]
 }
+```
 
-Errors
-400 schema mismatch
-422 empty candidate set or disallowed context key
-503 models not warmed up
+### `/predict_batch`
+
+Accepts up to 100 stimuli per request. Response mirrors `/predict` but keyed by stimulus ID.
+
+### `/compare`
+
+```jsonc
+POST /compare
+{
+  "baseline": "Standard shipping ($5)",
+  "variants": [
+    {"id": "free_shipping", "stimulus": "Free shipping on orders over $50"},
+    {"id": "express_upgrade", "stimulus": "Express delivery upgrade for $9.99"}
+  ]
+}
+```
+
+Response returns baseline prediction and, for each variant, the lift (%) versus baseline.
+
+### `/personas`
+
+Proxy to `models/persona_profiles.json`. Useful for UI dropdowns or experimentation dashboards.
+
+## Serialization Models (Pydantic v2)
+
+```python
+class Scenario(BaseModel):
+    id: str | None = None
+    stimulus: str
+    persona_ids: list[str] | None = None
+
+class LikertPrediction(BaseModel):
+    mean: float
+    std: float
+    mode: int
+    distribution: tuple[float, float, float, float, float]
+
+class PredictResponse(BaseModel):
+    stimulus: str
+    prediction: LikertPrediction
+    personas: list[PersonaWeight]
+```
+
+## Next Steps
+
+1. Implement FastAPI app in `src/api/ssr_service.py`
+2. Add automated contract tests
+3. Extend Streamlit client to optionally call the API
+4. Document deployment recipe (Docker + ECS / EKS)
+
+Until then, use the Streamlit demo or the Python API (`SSRInference`) for experimentation.

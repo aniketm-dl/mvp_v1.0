@@ -325,7 +325,7 @@ if [ "$USE_SPOT" == "true" ]; then
         --security-group-ids $SG_ID \
         --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":$STORAGE_SIZE,\"VolumeType\":\"gp3\"}}]" \
         --instance-market-options "{\"MarketType\":\"spot\",\"SpotOptions\":{\"MaxPrice\":\"$SPOT_PRICE\",\"SpotInstanceType\":\"one-time\"}}" \
-        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=darpan-training},{Key=Project,Value=darpan-labs}]" \
+        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=mvp_opera_do_not_delete},{Key=Project,Value=darpan-labs}]" \
         --query 'Instances[0].InstanceId' \
         --output text)
 else
@@ -336,7 +336,7 @@ else
         --key-name $KEY_NAME \
         --security-group-ids $SG_ID \
         --block-device-mappings "[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":$STORAGE_SIZE,\"VolumeType\":\"gp3\"}}]" \
-        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=darpan-training},{Key=Project,Value=darpan-labs}]" \
+        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=mvp_opera_do_not_delete},{Key=Project,Value=darpan-labs}]" \
         --query 'Instances[0].InstanceId' \
         --output text)
 fi

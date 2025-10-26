@@ -31,14 +31,40 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Parse arguments
-SKIP_LLM_TWINS=false
+USE_LLM_ELICITATION=false
+LLM_MAX_SESSIONS=${LLM_MAX_SESSIONS:-""}
+LLM_SAMPLES_PER_PROMPT=${LLM_SAMPLES_PER_PROMPT:-2}
+LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.5}
+LLM_PROVIDER=${LLM_PROVIDER:-openai}
+LLM_SEED=${LLM_SEED:-42}
+LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
 AUTO_SHUTDOWN=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --skip-llm-twins)
-      SKIP_LLM_TWINS=true
+    --use-llm-elicitations)
+      USE_LLM_ELICITATION=true
       shift
+      ;;
+    --llm-max-sessions)
+      LLM_MAX_SESSIONS="$2"
+      shift 2
+      ;;
+    --llm-samples-per-prompt)
+      LLM_SAMPLES_PER_PROMPT="$2"
+      shift 2
+      ;;
+    --llm-temperature)
+      LLM_TEMPERATURE="$2"
+      shift 2
+      ;;
+    --llm-provider)
+      LLM_PROVIDER="$2"
+      shift 2
+      ;;
+    --llm-seed)
+      LLM_SEED="$2"
+      shift 2
       ;;
     --auto-shutdown)
       AUTO_SHUTDOWN=true
@@ -52,7 +78,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo -e "${CYAN}=========================================================================="
-echo -e "🚀 DARPAN LABS - COMPLETE OPeRA-SSR-TWIN TRAINING PIPELINE"
+echo -e "🚀 DARPAN LABS - COMPLETE OPeRA-SSR TRAINING PIPELINE"
 echo -e "==========================================================================${NC}"
 echo ""
 
@@ -60,7 +86,7 @@ echo ""
 echo -e "${CYAN}📋 Checking prerequisites...${NC}"
 
 if [ -z "$OPENAI_API_KEY" ]; then
-    echo -e "${RED}❌ OPENAI_API_KEY not set. Required for persona summarization.${NC}"
+    echo -e "${RED}❌ OPENAI_API_KEY not set. Required for persona summarization and optional LLM elicitation.${NC}"
     echo "   Set with: export OPENAI_API_KEY='sk-...'"
     exit 1
 fi
@@ -100,7 +126,7 @@ echo ""
 ###############################################################################
 
 echo -e "${CYAN}=========================================================================="
-echo -e "STEP 1/7: Download OPeRA Dataset from HuggingFace"
+echo -e "STEP 1/6: Download OPeRA Dataset from HuggingFace"
 echo -e "==========================================================================${NC}"
 echo ""
 
@@ -115,18 +141,47 @@ echo ""
 ###############################################################################
 
 echo -e "${CYAN}=========================================================================="
-echo -e "STEP 2/7: Preprocess & Align OPeRA Data"
+echo -e "STEP 2/6: Preprocess & Align OPeRA Data"
 echo -e "==========================================================================${NC}"
 echo ""
 
-python scripts/02_preprocess_opera.py \
-  --survey DATA/OPeRA/raw/opera_users.parquet \
-  --sessions DATA/OPeRA/raw/sample_sessions.jsonl \
-  --rationales DATA/OPeRA/raw/opera_rationales.jsonl \
-  --outcomes DATA/OPeRA/raw/opera_outcomes.jsonl \
-  --out-dir DATA/OPeRA/processed \
-  --min-steps 3 \
-  --max-steps 100
+if [ "$USE_LLM_ELICITATION" = true ]; then
+    echo -e "${CYAN}🤖 Using LLM elicitation for SSR training pairs${NC}"
+    python scripts/02b_preprocess_opera_with_llm.py \
+      --survey DATA/OPeRA/raw/opera_users.parquet \
+      --sessions DATA/OPeRA/raw/sample_sessions.jsonl \
+      --rationales DATA/OPeRA/raw/opera_rationales.jsonl \
+      --outcomes DATA/OPeRA/raw/opera_outcomes.jsonl \
+      --out-dir DATA/OPeRA/processed \
+      --min-steps 3 \
+      --max-steps 100 \
+      --llm-provider "$LLM_PROVIDER" \
+      --llm-model "${LLM_MODEL:-gpt-4o-mini}" \
+      --llm-temperature "$LLM_TEMPERATURE" \
+      --samples-per-prompt "$LLM_SAMPLES_PER_PROMPT" \
+      --seed "$LLM_SEED" \
+      $(if [ -n "$LLM_MAX_SESSIONS" ]; then echo "--max-llm-sessions $LLM_MAX_SESSIONS"; fi)
+    TRAINING_PAIRS_PATH="DATA/OPeRA/processed/ssr_training_pairs_llm.jsonl"
+    HUMAN_RATINGS_PATH="DATA/OPeRA/processed/ssr_training_pairs.jsonl"
+    SYNTHETIC_RESPONSES_PATH="$TRAINING_PAIRS_PATH"
+else
+    python scripts/02_preprocess_opera.py \
+      --survey DATA/OPeRA/raw/opera_users.parquet \
+      --sessions DATA/OPeRA/raw/sample_sessions.jsonl \
+      --rationales DATA/OPeRA/raw/opera_rationales.jsonl \
+      --outcomes DATA/OPeRA/raw/opera_outcomes.jsonl \
+      --out-dir DATA/OPeRA/processed \
+      --min-steps 3 \
+      --max-steps 100
+    TRAINING_PAIRS_PATH="DATA/OPeRA/processed/ssr_training_pairs.jsonl"
+    HUMAN_RATINGS_PATH="$TRAINING_PAIRS_PATH"
+    SYNTHETIC_RESPONSES_PATH=""
+fi
+
+if [ ! -f "$TRAINING_PAIRS_PATH" ]; then
+    echo -e "${RED}❌ Expected training pairs not found at $TRAINING_PAIRS_PATH.${NC}"
+    exit 1
+fi
 
 echo ""
 echo -e "${GREEN}✅ Step 2 complete: Data preprocessed & aligned${NC}"
@@ -137,7 +192,7 @@ echo ""
 ###############################################################################
 
 echo -e "${CYAN}=========================================================================="
-echo -e "STEP 3/7: Discover Personas (UMAP + HDBSCAN + GPT-4o)"
+echo -e "STEP 3/6: Discover Personas (UMAP + HDBSCAN + GPT-4o)"
 echo -e "==========================================================================${NC}"
 echo ""
 
@@ -167,80 +222,52 @@ echo ""
 ###############################################################################
 
 echo -e "${CYAN}=========================================================================="
-echo -e "STEP 4/7: Train SSR Model (Semantic Similarity Rating)"
+echo -e "STEP 4/6: Train SSR Model (Semantic Similarity Rating)"
 echo -e "==========================================================================${NC}"
 echo ""
 
 python scripts/04_train_ssr.py \
-  --training-pairs DATA/OPeRA/processed/ssr_training_pairs.jsonl \
+  --training-pairs "$TRAINING_PAIRS_PATH" \
   --out models/ssr_reference \
   --base-model sentence-transformers/all-MiniLM-L6-v2 \
   --embedding-epochs 10 \
   --regression-epochs 20 \
   --batch-size 32 \
-  --learning-rate 2e-5
+  --learning-rate 2e-5 \
+  $(if [ "$USE_LLM_ELICITATION" = true ]; then echo "--use-references"; fi)
 
 echo ""
 echo -e "${GREEN}✅ Step 4 complete: SSR model trained${NC}"
 echo ""
 
 ###############################################################################
-# STEP 5: Train LLM Twins (Optional)
-###############################################################################
-
-if [ "$SKIP_LLM_TWINS" = false ]; then
-    echo -e "${CYAN}=========================================================================="
-    echo -e "STEP 5/7: Train LLM Twins (Mistral-7B LoRA Adapters)"
-    echo -e "==========================================================================${NC}"
-    echo ""
-
-    # Check if existing LLM training script exists
-    if [ -f "scripts/aws/train_production.py" ]; then
-        python scripts/aws/train_production.py \
-          --personas-file models/persona_profiles.json \
-          --sync-s3
-    else
-        echo -e "${YELLOW}⚠️  LLM training script not found. Skipping LLM twin training.${NC}"
-        echo "   SSR-only model is still functional for predictions."
-    fi
-
-    echo ""
-    echo -e "${GREEN}✅ Step 5 complete: LLM twins trained${NC}"
-    echo ""
-else
-    echo -e "${YELLOW}⏭️  Skipping LLM twin training (--skip-llm-twins flag)${NC}"
-    echo ""
-fi
-
-###############################################################################
-# STEP 6: Evaluate Models
+# STEP 5: Evaluate Models
 ###############################################################################
 
 echo -e "${CYAN}=========================================================================="
-echo -e "STEP 6/7: Evaluate Models (KS Similarity + Correlation)"
+echo -e "STEP 5/6: Evaluate Models (KS Similarity + Correlation)"
 echo -e "==========================================================================${NC}"
 echo ""
 
-# Create placeholder evaluation script if it doesn't exist
-if [ ! -f "scripts/07_evaluate.py" ]; then
-    echo -e "${YELLOW}⚠️  Evaluation script not yet implemented. Skipping.${NC}"
-else
-    python scripts/07_evaluate.py \
-      --ssr-model models/ssr_reference \
-      --test-data DATA/OPeRA/processed/aligned_sequences.jsonl \
-      --out-dir reports
-fi
+mkdir -p reports
+
+python scripts/07_evaluate.py \
+  --ssr-model models/ssr_reference \
+  --human-data "$HUMAN_RATINGS_PATH" \
+  --out-dir reports \
+  --include-regression \
+  $(if [ -n "$SYNTHETIC_RESPONSES_PATH" ]; then echo "--anchor-scenario persona=$SYNTHETIC_RESPONSES_PATH"; fi)
 
 echo ""
-echo -e "${GREEN}✅ Step 6 complete: Models evaluated${NC}"
+echo -e "${GREEN}✅ Step 5 complete: Models evaluated${NC}"
 echo ""
 
 ###############################################################################
-# STEP 7: Sync to S3
+# STEP 6: Sync to S3
 ###############################################################################
 
 echo -e "${CYAN}=========================================================================="
-echo -e "STEP 7/7: Sync Models & Reports to S3"
+echo -e "STEP 6/6: Sync Models & Reports to S3"
 echo -e "==========================================================================${NC}"
 echo ""
 
@@ -252,12 +279,6 @@ else
     # Sync models
     aws s3 sync models/ s3://$TRAINING_S3_BUCKET/models/ --exclude "*.git/*" --exclude "__pycache__/*"
     echo -e "${GREEN}✅ Models synced${NC}"
-
-    # Sync artifacts (if LLM twins were trained)
-    if [ -d "artifacts/llm_adapters" ] && [ "$SKIP_LLM_TWINS" = false ]; then
-        aws s3 sync artifacts/llm_adapters/ s3://$TRAINING_S3_BUCKET/artifacts/llm_adapters/
-        echo -e "${GREEN}✅ LLM adapters synced${NC}"
-    fi
 
     # Sync reports
     if [ -d "reports" ]; then
@@ -293,9 +314,6 @@ echo -e "${CYAN}📁 Generated Files:${NC}"
 echo "   • DATA/OPeRA/processed/aligned_sequences.jsonl"
 echo "   • models/persona_profiles.json (${NUM_PERSONAS} personas)"
 echo "   • models/ssr_reference/ (SSR model)"
-if [ "$SKIP_LLM_TWINS" = false ] && [ -d "artifacts/llm_adapters" ]; then
-    echo "   • artifacts/llm_adapters/ (LLM twins)"
-fi
 echo ""
 
 if [ ! -z "$TRAINING_S3_BUCKET" ]; then
@@ -306,9 +324,6 @@ fi
 echo -e "${CYAN}📊 Model Quality:${NC}"
 echo "   • Personas: ${NUM_PERSONAS} discovered"
 echo "   • SSR: Check logs for correlation score"
-if [ "$SKIP_LLM_TWINS" = false ]; then
-    echo "   • LLM Twins: Check artifacts/ directory"
-fi
 echo ""
 
 echo -e "${CYAN}🚀 Next Steps:${NC}"

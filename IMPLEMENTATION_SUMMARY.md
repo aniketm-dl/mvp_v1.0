@@ -197,7 +197,7 @@ streamlit run src/app/main.py
 **Files Created:**
 - `scripts/aws/train_complete_pipeline.sh` - One-command training
 - `scripts/aws/upload_and_train.sh` - S3 sync helper
-- `scripts/aws/complete_training_setup.sh` - Instance setup
+- `scripts/aws/setup_training_instance.sh` - Instance bootstrap
 
 **Pipeline Steps:**
 1. Download OPeRA dataset (5-10 min)
@@ -307,7 +307,7 @@ mvp_v1.0/
 │   └── aws/
 │       ├── train_complete_pipeline.sh
 │       ├── upload_and_train.sh
-│       └── complete_training_setup.sh
+│       └── setup_training_instance.sh
 └── TESTS/
     ├── test_ssr_inference.py
     └── test_evaluation_metrics.py

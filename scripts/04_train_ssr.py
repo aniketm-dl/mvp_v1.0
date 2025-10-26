@@ -63,13 +63,25 @@ def main():
         default=2e-5,
         help="Learning rate for embedding fine-tuning",
     )
+    parser.add_argument(
+        "--use-references",
+        action="store_true",
+        help="Use reference statement sets for contrastive training (SSR paper methodology)",
+    )
 
     args = parser.parse_args()
 
     console.print("\n[bold cyan]🚀 SSR Model Training Pipeline[/bold cyan]")
     console.print(f"   Training data: {args.training_pairs}")
     console.print(f"   Base model: {args.base_model}")
+    console.print(f"   Use reference statements: {args.use_references}")
     console.print(f"   Output: {args.out}\n")
+
+    if args.use_references:
+        console.print("[bold green]✨ SSR Paper Methodology Enabled[/bold green]")
+        console.print("   • Using reference statement sets for contrastive training")
+        console.print("   • Expecting LLM-elicited responses in training data")
+        console.print("   • See: SSR_IMPLEMENTATION_GAP_ANALYSIS.md for details\n")
 
     # Initialize trainer
     console.print("[bold cyan]📦 Initializing SSR trainer...[/bold cyan]")
@@ -111,6 +123,7 @@ def main():
         epochs=args.embedding_epochs,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
+        use_references=args.use_references,
     )
 
     console.print("\n[bold green]✅ Phase 1 complete![/bold green]\n")
