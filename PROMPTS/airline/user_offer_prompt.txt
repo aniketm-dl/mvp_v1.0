@@ -1,0 +1,30 @@
+You have been presented with the following offer:
+
+===== OFFER DETAILS =====
+
+Offer: {offer_name}
+Type: {offer_type}
+Original Price: ${original_price:.2f}
+Discount: {discount_pct:.0f}% OFF
+Final Price: ${final_price:.2f}
+
+{constraints_text}
+
+===== CURRENT CONTEXT =====
+
+Flight Length: {flight_length}
+Trip Purpose: {trip_purpose}
+Time Pressure: {time_pressure}
+Recent Delays: {recent_delays}
+
+===== YOUR DECISION =====
+
+Would you accept this offer?
+
+Remember:
+- Answer as yourself (the passenger described in your profile)
+- Consider your past experiences and preferences
+- Think about similar passengers' behavior patterns
+- Be honest about what you would actually do
+
+Respond with JSON only.

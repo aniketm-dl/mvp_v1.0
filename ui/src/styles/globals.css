@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-neon-surface;
+  }
+
+  body {
+    @apply bg-neon-darkbg text-neon-text font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-neon-green hover:bg-neon-green/90 text-neon-darkbg font-bold py-2 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-neon-green/50;
+  }
+
+  .btn-secondary {
+    @apply bg-neon-surface hover:bg-neon-surfacelight text-neon-text font-semibold py-2 px-6 rounded-lg transition-all duration-200 border border-neon-blue hover:border-neon-blue/70;
+  }
+
+  .card {
+    @apply bg-neon-surface rounded-xl p-6 border border-neon-surfacelight/50;
+  }
+
+  .card-glow {
+    @apply card hover:shadow-lg hover:shadow-neon-green/20 transition-all duration-300;
+  }
+
+  .input {
+    @apply bg-neon-surfacelight border border-neon-surface text-neon-text rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-neon-green/50 focus:border-neon-green transition-all;
+  }
+
+  .badge {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-semibold;
+  }
+
+  .badge-green {
+    @apply badge bg-neon-green/20 text-neon-green border border-neon-green/30;
+  }
+
+  .badge-blue {
+    @apply badge bg-neon-blue/20 text-neon-blue border border-neon-blue/30;
+  }
+
+  .badge-gray {
+    @apply badge bg-neon-surface text-neon-textsecondary border border-neon-surfacelight;
+  }
+
+  .decision-yes {
+    @apply badge-green;
+  }
+
+  .decision-no {
+    @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-neon-green to-neon-blue bg-clip-text text-transparent;
+  }
+
+  .divider {
+    @apply border-t border-neon-surfacelight my-6;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #B8FF00 #1A1A2E;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #1A1A2E;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #B8FF00;
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #00D4FF;
+  }
+}
+
+@layer utilities {
+  .glow-green {
+    box-shadow: 0 0 10px rgba(184, 255, 0, 0.5);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+  }
+}

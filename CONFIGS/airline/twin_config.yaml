@@ -1,0 +1,171 @@
+# Airline Digital Twin Configuration
+# LLM-based prompt-only twin simulator for airline passenger personas
+
+# LLM Settings
+llm:
+  provider: "openai"  # or "anthropic"
+  model: "gpt-4-turbo-preview"  # or "gpt-3.5-turbo" for cost savings, "claude-3-sonnet-20240229" for anthropic
+  temperature: 0.2  # Low for consistency, not 0 for some natural variation
+  top_p: 1.0
+  max_tokens: 128
+  seed: 42  # Default seed for determinism
+  timeout: 30  # seconds
+
+# Psychographic Tag Definitions
+psychographic_tags:
+  punctuality_sensitive:
+    description: "Highly values on-time performance"
+    rule: "delay_arr_bucket > 60 OR high time_convenient rating but low satisfaction on delayed flights"
+
+  comfort_seeker:
+    description: "Prioritizes physical comfort"
+    rule: "mean(seat_comfort, leg_room, cleanliness) >= 4.2"
+
+  service_reliability:
+    description: "Values reliable baggage and service"
+    rule: "baggage_handling >= 4 AND on_board_service >= 4"
+
+  digital_first:
+    description: "Prefers digital booking and boarding"
+    rule: "online_booking >= 4.2 AND online_boarding >= 4.2"
+
+  value_conscious:
+    description: "Price-sensitive, economy class preference"
+    rule: "flight_class == 'Eco' AND type_of_travel == 'Personal Travel' AND rating_variance <= 0.8"
+
+  amenity_lover:
+    description: "Enjoys entertainment and food services"
+    rule: "inflight_entertainment >= 4.2 AND food_and_drink >= 4.2"
+
+  business_oriented:
+    description: "Business travel focus, efficiency-driven"
+    rule: "type_of_travel == 'Business travel' AND checkin_service >= 4 AND online_boarding >= 4"
+
+# Discount Ladder Rules
+# These define "yes at X% discount" thresholds for different offers and personas
+discount_ladders:
+  extra_legroom:
+    comfort_seeker: 0.10  # 10% discount needed
+    business_oriented: 0.15
+    value_conscious: 0.30
+    default: 0.25
+
+  wifi_access:
+    digital_first: 0.10
+    business_oriented: 0.15
+    value_conscious: 0.35
+    default: 0.25
+
+  lounge_access:
+    business_oriented: 0.15
+    comfort_seeker: 0.20
+    value_conscious: 0.40
+    default: 0.30
+
+  priority_boarding:
+    punctuality_sensitive: 0.10
+    business_oriented: 0.15
+    value_conscious: 0.30
+    default: 0.25
+
+  extra_baggage:
+    service_reliability: 0.15
+    business_oriented: 0.20
+    value_conscious: 0.35
+    default: 0.30
+
+# Cohort Similarity Key Definition
+# Defines how passengers are grouped for computing priors
+cohort:
+  key_fields:
+    - age_band
+    - gender
+    - type_of_travel
+    - flight_class
+    - distance_band
+  min_cohort_size: 5  # Minimum samples needed for valid cohort
+
+# Age Bands
+age_bands:
+  - label: "18-24"
+    min: 18
+    max: 24
+  - label: "25-34"
+    min: 25
+    max: 34
+  - label: "35-44"
+    min: 35
+    max: 44
+  - label: "45-54"
+    min: 45
+    max: 54
+  - label: "55+"
+    min: 55
+    max: 999
+
+# Distance Bands (in miles)
+distance_bands:
+  - label: "short"
+    min: 0
+    max: 1000
+  - label: "medium"
+    min: 1001
+    max: 2500
+  - label: "long"
+    min: 2501
+    max: 99999
+
+# Delay Bands (in minutes)
+delay_bands:
+  - label: "none"
+    min: 0
+    max: 0
+  - label: "minor"
+    min: 1
+    max: 15
+  - label: "moderate"
+    min: 16
+    max: 60
+  - label: "major"
+    min: 61
+    max: 99999
+
+# Offer Types
+offer_types:
+  - name: "extra_legroom"
+    display_name: "Extra Legroom Seat"
+    category: "upgrade_addon"
+    default_price: 25  # USD
+
+  - name: "wifi_access"
+    display_name: "Inflight WiFi Access"
+    category: "service_addon"
+    default_price: 15
+
+  - name: "lounge_access"
+    display_name: "Airport Lounge Access"
+    category: "service_addon"
+    default_price: 40
+
+  - name: "priority_boarding"
+    display_name: "Priority Boarding"
+    category: "priority"
+    default_price: 20
+
+  - name: "extra_baggage"
+    display_name: "Extra Checked Baggage"
+    category: "service_addon"
+    default_price: 30
+
+# Evaluation Settings
+evaluation:
+  monotonicity_threshold: 0.95  # 95% of tests must pass
+  stability_threshold: 1.00  # 100% stability with same seed
+  cohort_coherence_max_variance: 0.2  # Within-cohort variance limit
+
+# Logging
+logging:
+  decision_ledger: "DATA/airline/decisions/ledger.csv"
+  prompt_cache: "DATA/airline/decisions/prompt_cache.json"
+  audit_log: "DATA/airline/decisions/audit.log"
+  save_prompts: true  # Save full prompts for debugging

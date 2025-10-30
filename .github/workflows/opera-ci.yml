@@ -1,0 +1,144 @@
+name: OPeRA CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "data/opera/**"
+      - "CONFIGS/opera.yaml"
+      - ".github/workflows/opera-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "data/opera/**"
+      - "CONFIGS/opera.yaml"
+      - ".github/workflows/opera-ci.yml"
+
+jobs:
+  test-parser-and-dataset:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv pip install --system pydantic pydantic-settings datasets torch numpy rich pandas pyarrow beautifulsoup4 pytest pyyaml
+
+      - name: Run schema validation tests
+        run: |
+          uv run python -m pytest data/opera/__tests__/test_parse_and_dataset.py::TestSchemas -v
+
+      - name: Run HTML normalizer tests
+        run: |
+          uv run python -m pytest data/opera/__tests__/test_parse_and_dataset.py::TestHTMLNormalizer -v
+
+      - name: Run parser tests
+        run: |
+          uv run python -m pytest data/opera/__tests__/test_parse_and_dataset.py::TestParser -v
+
+      - name: Run dataset tests
+        run: |
+          uv run python -m pytest data/opera/__tests__/test_parse_and_dataset.py::TestDataset -v
+
+      - name: Check token budget compliance
+        run: |
+          uv run python -c "
+          from data.opera.schemas import OPeRAStep
+          import sys
+
+          # Test observation budget
+          try:
+              obs = ' '.join(['token'] * 121)
+              step = OPeRAStep(
+                  t=0,
+                  observation=obs,
+                  action='click',
+                  action_label=0,
+                  persona_vec=[0.5] * 12
+              )
+              print('ERROR: Observation budget not enforced')
+              sys.exit(1)
+          except ValueError:
+              print('✓ Observation budget enforced')
+
+          # Test rationale budget
+          try:
+              rat = ' '.join(['word'] * 61)
+              step = OPeRAStep(
+                  t=0,
+                  observation='Valid observation text here',
+                  action='click',
+                  action_label=0,
+                  persona_vec=[0.5] * 12,
+                  rationale=rat
+              )
+              print('ERROR: Rationale budget not enforced')
+              sys.exit(1)
+          except ValueError:
+              print('✓ Rationale budget enforced')
+
+          print('✓ All token budgets validated')
+          "
+
+      - name: Validate config schema
+        run: |
+          uv run python -c "
+          import yaml
+          from data.opera.schemas import OPeRAConfig
+
+          with open('CONFIGS/opera.yaml', 'r') as f:
+              config_dict = yaml.safe_load(f)
+
+          config = OPeRAConfig(**config_dict)
+          print(f'✓ Config valid: {config.deterministic=}, {config.seed=}')
+
+          # Verify deterministic settings
+          assert config.deterministic == True, 'Config must be deterministic'
+          assert config.seed == 17, 'Seed must be 17'
+          assert config.token_limits['observation_max'] == 120
+          assert config.token_limits['rationale_max'] == 60
+          print('✓ All config constraints validated')
+          "
+
+  lint-and-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linting tools
+        run: |
+          pip install ruff black
+
+      - name: Run ruff check
+        run: |
+          ruff check data/opera/ --select F,E,W,I
+
+      - name: Check black formatting
+        run: |
+          black --check data/opera/
+
+      - name: Check future imports
+        run: |
+          grep -L "from __future__ import annotations" data/opera/*.py && exit 1 || echo "✓ All files have future imports"

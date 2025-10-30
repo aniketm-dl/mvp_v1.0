@@ -67,7 +67,14 @@
       "Bash(then echo \"✅ $twin\" else echo \"⏳ $twin\" fi done)",
       "Read(//tmp/**)",
       "Bash(__NEW_LINE__ echo \"=== API directory ===\")",
-      "Bash(__NEW_LINE__ echo \"\")"
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(git log --all --oneline --grep=\"openai\\|api\\|llm\" -i)",
+      "Bash(npm --version:*)",
+      "Bash(npm install:*)",
+      "Bash(echo:*)",
+      "Bash(export:*)",
+      "Bash(/Users/aniketniranjanmishra/Library/Python/3.9/bin/uvicorn:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

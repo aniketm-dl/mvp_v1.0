@@ -30,6 +30,22 @@ from src.profiles.loader import profile_vec_for_user, psych_tags_to_vec, demo_pr
 from src.admin.store import PinStore
 from src.reasoning.llm_runtime import RUNTIME
 
+# Airline module imports
+from src.airline.twin_card import load_twin_card
+from src.airline.schemas import (
+    OfferAcceptanceTask,
+    DecisionContext,
+    DecisionResponse,
+    TwinDecision,
+    create_legroom_offer,
+    create_wifi_offer,
+    create_lounge_offer,
+    create_priority_boarding_offer,
+    create_baggage_offer
+)
+from src.airline.prompt_composer import compose_prompts
+from src.airline.llm_gateway import LLMGateway
+
 # Load configs
 _policy_cfg = yaml.safe_load(Path("CONFIGS/serve/policy.yaml").read_text())
 _admin_cfg = yaml.safe_load(Path("CONFIGS/serve/admin.yaml").read_text())
@@ -39,7 +55,8 @@ _api_cfg = yaml.safe_load(Path("CONFIGS/serve/api.yaml").read_text())
 _ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", str(_admin_cfg["admin"]["token"]))
 # CORS origins: env overrides config
 _env_origins = os.getenv("CORS_ALLOW_ORIGINS")
-_ALLOW_ORIGINS = [o.strip() for o in (_env_origins.split(",") if _env_origins else _api_cfg.get("cors", {}).get("allow_origins", []))]
+_default_origins = _api_cfg.get("cors", {}).get("allow_origins", []) + ["http://localhost:5173", "http://127.0.0.1:5173"]
+_ALLOW_ORIGINS = [o.strip() for o in (_env_origins.split(",") if _env_origins else _default_origins)]
 # Rate limit: env override
 _RATE = int(os.getenv("RATE_LIMIT_REQS_PER_MIN", "120"))
 
@@ -406,3 +423,177 @@ def simulate(req: SimulateRequest) -> SimulateResponse:
         }
     }
     return SimulateResponse(by_scenario=by_scenario, twin_weights=twin_weights, primary_twin=pt, sim_config=sim_cfg)
+
+# --- Airline Module Endpoints ---
+
+# Pydantic models for airline API
+from pydantic import BaseModel, Field
+class AirlineDecisionRequest(BaseModel):
+    twin_id: str = Field(..., description="Twin identifier (e.g., twin_001)")
+    offer_type: str = Field(..., description="Offer type: legroom, wifi, lounge, boarding, baggage")
+    discount_pct: float = Field(..., description="Discount percentage (0.0 to 1.0)")
+    flight_length: str = Field(default="medium", description="Flight length: short, medium, long")
+    trip_purpose: str = Field(default="business", description="Trip purpose: business, leisure")
+    time_pressure: str = Field(default="medium", description="Time pressure: low, medium, high")
+    recent_delays: str = Field(default="minor", description="Recent delays: none, minor, major")
+    seed: Optional[int] = Field(default=None, description="Random seed for determinism")
+
+class AirlineBatchDecisionRequest(BaseModel):
+    twin_ids: List[str] = Field(..., description="List of twin identifiers")
+    offer_type: str = Field(..., description="Offer type")
+    discount_pct: float = Field(..., description="Discount percentage")
+    flight_length: str = Field(default="medium")
+    trip_purpose: str = Field(default="business")
+    time_pressure: str = Field(default="medium")
+    recent_delays: str = Field(default="minor")
+    seed: Optional[int] = Field(default=None)
+
+# Initialize LLM gateway for airline twins
+_AIRLINE_CONFIG_PATH = Path("CONFIGS/airline/twin_config.yaml")
+_AIRLINE_GATEWAY = LLMGateway(_AIRLINE_CONFIG_PATH) if _AIRLINE_CONFIG_PATH.exists() else None
+_AIRLINE_TWINS_DIR = Path("DATA/airline/twins")
+_AIRLINE_PROMPTS_DIR = Path("PROMPTS/airline")
+
+OFFER_FACTORIES = {
+    "legroom": create_legroom_offer,
+    "wifi": create_wifi_offer,
+    "lounge": create_lounge_offer,
+    "boarding": create_priority_boarding_offer,
+    "baggage": create_baggage_offer
+}
+
+@app.get("/airline/twins")
+def airline_twins_list() -> Dict[str, Any]:
+    """List all available airline twins."""
+    if not _AIRLINE_TWINS_DIR.exists():
+        return {"twins": [], "error": "Airline twins directory not found"}
+
+    twins = []
+    for twin_file in sorted(_AIRLINE_TWINS_DIR.glob("twin_*.json")):
+        with open(twin_file) as f:
+            twin_data = json.load(f)
+            twins.append({
+                "id": twin_data["id"],
+                "label": twin_data["label"],
+                "demographics": twin_data["demographics"],
+                "psychographics": twin_data["psychographics"],
+                "travel_profile": twin_data["travel_profile"]
+            })
+
+    return {"twins": twins, "count": len(twins)}
+
+@app.post("/airline/decide")
+def airline_decide(req: AirlineDecisionRequest) -> Dict[str, Any]:
+    """Make a single airline twin decision."""
+    if not _AIRLINE_GATEWAY:
+        raise HTTPException(status_code=500, detail="Airline LLM gateway not initialized")
+
+    # Load twin
+    twin_path = _AIRLINE_TWINS_DIR / f"{req.twin_id}.json"
+    if not twin_path.exists():
+        raise HTTPException(status_code=404, detail=f"Twin {req.twin_id} not found")
+
+    twin = load_twin_card(twin_path)
+
+    # Create offer
+    if req.offer_type not in OFFER_FACTORIES:
+        raise HTTPException(status_code=422, detail=f"Invalid offer type: {req.offer_type}")
+
+    offer_factory = OFFER_FACTORIES[req.offer_type]
+    offer = offer_factory(discount_pct=req.discount_pct)
+
+    # Create context
+    context = DecisionContext(
+        flight_length=req.flight_length,
+        trip_purpose=req.trip_purpose,
+        time_pressure=req.time_pressure,
+        recent_delays=req.recent_delays
+    )
+
+    # Create task
+    task = OfferAcceptanceTask(offer=offer, context=context)
+
+    # Compose prompts
+    system_prompt, user_prompt = compose_prompts(twin, task, _AIRLINE_PROMPTS_DIR)
+
+    # Get decision
+    try:
+        decision_dict, llm_metadata = _AIRLINE_GATEWAY.get_decision(
+            system_prompt,
+            user_prompt,
+            seed=req.seed
+        )
+
+        response = DecisionResponse.from_dict(decision_dict)
+
+        metadata = {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "seed": req.seed,
+            "llm_metadata": llm_metadata
+        }
+
+        twin_decision = TwinDecision(
+            twin_id=twin.id,
+            twin_label=twin.label,
+            task=task,
+            response=response,
+            metadata=metadata
+        )
+
+        return twin_decision.to_dict()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Decision failed: {str(e)}")
+
+@app.post("/airline/batch_decide")
+def airline_batch_decide(req: AirlineBatchDecisionRequest) -> Dict[str, Any]:
+    """Make decisions for multiple airline twins."""
+    results = []
+    errors = []
+
+    for twin_id in req.twin_ids:
+        try:
+            decision_req = AirlineDecisionRequest(
+                twin_id=twin_id,
+                offer_type=req.offer_type,
+                discount_pct=req.discount_pct,
+                flight_length=req.flight_length,
+                trip_purpose=req.trip_purpose,
+                time_pressure=req.time_pressure,
+                recent_delays=req.recent_delays,
+                seed=req.seed
+            )
+            decision = airline_decide(decision_req)
+            results.append(decision)
+        except Exception as e:
+            errors.append({"twin_id": twin_id, "error": str(e)})
+
+    return {
+        "results": results,
+        "errors": errors,
+        "total": len(req.twin_ids),
+        "successful": len(results),
+        "failed": len(errors)
+    }
+
+@app.get("/airline/decisions/export")
+def airline_decisions_export(format: str = "json") -> Any:
+    """Export decision ledger."""
+    ledger_path = Path("DATA/airline/decisions/ledger.csv")
+
+    if not ledger_path.exists():
+        raise HTTPException(status_code=404, detail="Decision ledger not found")
+
+    if format == "csv":
+        with open(ledger_path, "r") as f:
+            csv_content = f.read()
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(content=csv_content, media_type="text/csv")
+
+    elif format == "json":
+        import pandas as pd
+        df = pd.read_csv(ledger_path)
+        return JSONResponse(content=df.to_dict(orient="records"))
+
+    else:
+        raise HTTPException(status_code=422, detail="Format must be 'csv' or 'json'")
