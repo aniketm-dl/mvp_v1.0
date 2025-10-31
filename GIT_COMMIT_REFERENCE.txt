@@ -1,0 +1,5 @@
+Commit: 3b8d573967e667a989cfcee164afe4e4e43352ff
+Author: aniketm-dl <aniketm-dl@users.noreply.github.com>
+Date: Fri Oct 31 20:22:02 2025 +0100
+Message: v1 ready, chat doesnt work still
+
