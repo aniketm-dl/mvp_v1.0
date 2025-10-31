@@ -1,8 +1,9 @@
 import React from 'react'
 import type { AirlineTwin } from '../types'
-import { User, MapPin, Sparkles } from 'lucide-react'
+import { User, MapPin, Sparkles, Users, TrendingUp } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { getTwinName } from '../utils/twinNames'
+import { useTwinMetrics } from '../hooks/useTwinMetrics'
 import clsx from 'clsx'
 
 interface TwinCardProps {
@@ -11,15 +12,17 @@ interface TwinCardProps {
 
 export const TwinCard: React.FC<TwinCardProps> = ({ twin }) => {
   const { selectedTwinIds, toggleTwinSelection } = useStore()
+  const { metrics } = useTwinMetrics()
   const isSelected = selectedTwinIds.includes(twin.id)
   const twinName = getTwinName(twin.id)
+  const twinMetrics = metrics.get(twin.id)
 
   return (
     <div
       onClick={() => toggleTwinSelection(twin.id)}
       className={clsx(
-        'card cursor-pointer transition-all duration-200 hover:border-neon-green/50',
-        isSelected && 'ring-2 ring-neon-green border-neon-green'
+        'card cursor-pointer transition-all duration-200 hover:border-neon-blue/30',
+        isSelected && 'border-neon-blue bg-neon-surface/80'
       )}
     >
       {/* Header with name and checkbox */}
@@ -44,6 +47,48 @@ export const TwinCard: React.FC<TwinCardProps> = ({ twin }) => {
           </div>
         )}
       </div>
+
+      {/* Performance Metrics */}
+      {twinMetrics && (
+        <div className="mb-3 p-3 bg-gradient-to-r from-neon-surface to-neon-surfacelight rounded-lg border border-neon-blue/20">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-neon-blue" />
+              <div>
+                <p className="text-xs text-neon-textsecondary">Customers</p>
+                <p className="text-sm font-bold text-neon-text">
+                  {twinMetrics.customer_count.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp size={14} className="text-neon-green" />
+              <div>
+                <p className="text-xs text-neon-textsecondary">Cohort Prior</p>
+                <p className="text-sm font-bold text-neon-text">
+                  {(twinMetrics.cohort_prior * 100).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          </div>
+          {twinMetrics.avg_satisfaction > 0 && (
+            <div className="mt-2 pt-2 border-t border-neon-surface">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-neon-textsecondary">Satisfaction</span>
+                <span className="text-xs font-semibold text-neon-green">
+                  {(twinMetrics.avg_satisfaction * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="mt-1 h-1.5 bg-neon-surface rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-neon-blue to-neon-green rounded-full transition-all duration-500"
+                  style={{ width: `${twinMetrics.avg_satisfaction * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Demographics - More prominent */}
       <div className="mb-3 p-3 bg-neon-surfacelight rounded-lg border border-neon-surface">

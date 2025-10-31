@@ -100,3 +100,25 @@ class SimulateResponse(BaseModel):
     twin_weights: Dict[str, float]
     primary_twin: Optional[Dict[str, str]] = None
     sim_config: Dict[str, Any]
+
+class ValidationMetrics(BaseModel):
+    """Metrics from model validation and training"""
+    silhouette_score: float
+    jensen_shannon_divergence: float
+    ari_stability: float
+    thresholds: Dict[str, float]
+
+class TwinMetrics(BaseModel):
+    """Metrics for individual twin"""
+    twin_id: str
+    label: str
+    customer_count: int
+    cohort_prior: float
+    satisfaction_rate: Optional[float] = None
+
+class MetricsResponse(BaseModel):
+    """Response for metrics endpoint"""
+    validation_metrics: ValidationMetrics
+    training_info: Dict[str, Any]
+    twin_metrics: List[TwinMetrics]
+    dataset_info: Dict[str, Any]

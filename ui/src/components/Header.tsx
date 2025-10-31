@@ -10,12 +10,12 @@ export const Header: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">
-              <span className="text-neon-green">From Hunches</span>{' '}
-              <span className="text-white">to</span>{' '}
-              <span className="text-neon-blue">Evidence</span>
+              <span className="text-neon-green">Digital Twin</span>{' '}
+              <span className="text-white">Simulator</span>{' '}
+              <span className="text-neon-blue">for Airlines</span>
             </h1>
             <p className="text-neon-textsecondary mt-1">
-              Simulate real customers to test products, UX, and campaigns before you go live
+              Test pricing strategies, promotions, and customer experiences with AI-powered personas
             </p>
           </div>
 
@@ -39,6 +39,16 @@ export const Header: React.FC = () => {
               }`}
             >
               Chat
+            </button>
+            <button
+              onClick={() => setViewMode('metrics')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                viewMode === 'metrics'
+                  ? 'bg-neon-green text-neon-darkbg'
+                  : 'bg-neon-surfacelight text-neon-textsecondary hover:text-neon-text'
+              }`}
+            >
+              Metrics
             </button>
           </div>
         </div>

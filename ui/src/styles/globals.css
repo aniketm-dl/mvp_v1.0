@@ -30,7 +30,7 @@
   }
 
   .card-glow {
-    @apply card hover:shadow-lg hover:shadow-neon-green/20 transition-all duration-300;
+    @apply card hover:shadow-lg hover:shadow-neon-blue/10 transition-all duration-300;
   }
 
   .input {

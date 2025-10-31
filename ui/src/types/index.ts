@@ -58,7 +58,7 @@ export interface ExperimentConfig {
   seed?: number
 }
 
-export type ViewMode = 'experiment' | 'chat'
+export type ViewMode = 'experiment' | 'chat' | 'metrics'
 
 // Chat types
 export interface ChatMessage {
