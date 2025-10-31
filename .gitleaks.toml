@@ -24,9 +24,15 @@ description = "OpenAI API Key"
 regex = '''sk-proj-[A-Za-z0-9_\-]{48,}'''
 tags = ["key", "openai", "api"]
 severity = "HIGH"
-[rules.allowlist]
-regexes = [
-    '''sk-proj-\.\.\.''',
+
+[[rules.allowlist]]
+paths = [
+    '''.*\.md''',
+    '''.*\.toml''',
+    '''.*\.example'''
+]
+stopwords = [
+    '''sk-proj-...''',
     '''sk-proj-YOUR''',
     '''sk-proj-REPLACE''',
     '''sk-proj-test''',
@@ -39,9 +45,15 @@ description = "Anthropic API Key"
 regex = '''sk-ant-[A-Za-z0-9_\-]{40,}'''
 tags = ["key", "anthropic", "api"]
 severity = "HIGH"
-[rules.allowlist]
-regexes = [
-    '''sk-ant-\.\.\.''',
+
+[[rules.allowlist]]
+paths = [
+    '''.*\.md''',
+    '''.*\.toml''',
+    '''.*\.example'''
+]
+stopwords = [
+    '''sk-ant-...''',
     '''sk-ant-YOUR''',
     '''sk-ant-REPLACE''',
     '''sk-ant-EXAMPLE'''
