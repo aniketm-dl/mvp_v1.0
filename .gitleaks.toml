@@ -8,9 +8,13 @@ title = "Darpan Labs Secret Scanning Configuration"
 paths = [
     '''.env.example''',
     '''docs/.*\.md''',
+    '''.*\.md''',
     '''README\.md''',
     '''.*\.example''',
-    '''.*\.template'''
+    '''.*\.template''',
+    '''.*\.toml''',
+    '''API_KEYS_SETUP\.md''',
+    '''SECURITY\.md'''
 ]
 
 # Custom rules for detecting secrets
@@ -20,6 +24,14 @@ description = "OpenAI API Key"
 regex = '''sk-proj-[A-Za-z0-9_\-]{48,}'''
 tags = ["key", "openai", "api"]
 severity = "HIGH"
+[rules.allowlist]
+regexes = [
+    '''sk-proj-\.\.\.''',
+    '''sk-proj-YOUR''',
+    '''sk-proj-REPLACE''',
+    '''sk-proj-test''',
+    '''sk-proj-EXAMPLE'''
+]
 
 [[rules]]
 id = "anthropic-api-key"
@@ -27,6 +39,13 @@ description = "Anthropic API Key"
 regex = '''sk-ant-[A-Za-z0-9_\-]{40,}'''
 tags = ["key", "anthropic", "api"]
 severity = "HIGH"
+[rules.allowlist]
+regexes = [
+    '''sk-ant-\.\.\.''',
+    '''sk-ant-YOUR''',
+    '''sk-ant-REPLACE''',
+    '''sk-ant-EXAMPLE'''
+]
 
 [[rules]]
 id = "aws-access-key"
