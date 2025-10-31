@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(find:*)",
+      "Bash(awk:*)",
+      "Bash(sort:*)",
+      "Bash(tree:*)",
+      "Bash(pip install:*)",
+      "Bash(python3 -m pip install:*)",
+      "Bash(if [ ! -d \"venv\" ])",
+      "Bash(then python3 -m venv venv)",
+      "Bash(fi)",
+      "Bash(source:*)",
+      "Bash(if [ -d \"venv\" ])",
+      "Bash(then source venv/bin/activate)",
+      "Bash(else echo \"venv still installing...\")",
+      "Bash(pip show:*)",
+      "Bash(python:*)",
+      "Bash(PYTHONPATH=. pytest tests/ -q)",
+      "Bash(PYTHONPATH=. pytest tests/ -v)",
+      "Bash(cd:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(kill:*)",
+      "Bash(ls:*)",
+      "Bash(uvicorn:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "bypassPermissions"
+  }
+}
