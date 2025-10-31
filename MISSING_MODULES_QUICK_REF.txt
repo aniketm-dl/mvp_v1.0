@@ -1,0 +1,106 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║        MISSING PYTHON MODULES - QUICK REFERENCE (MVP v1.0)                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+BLOCKING ISSUES (API Won't Start):
+────────────────────────────────────────────────────────────────────────────────
+
+1. src.models.encoder ..........................................  [MISSING]
+   ✗ Must implement 4 functions (8-D + 4-D + 3-D embeddings)
+   ✗ Location: src/models/encoder.py
+   ✗ Functions needed:
+     - encode_cta(cta_seq) → 8-D behavior vector
+     - project_psychographics(vec) → 4-D psychographic embedding  
+     - embed_demographics(vec) → 3-D demographic embedding
+     - fuse_joint(z_b, z_p, z_d) → 15-D combined embedding
+
+2. src.models.mixture .............................................  [MISSING]
+   ✗ Must implement twin mixture system using cosine similarity + softmax
+   ✗ Location: src/models/mixture.py
+   ✗ Functions needed:
+     - load_twin_bank() → loads DATA/twin_bank.json
+     - responsibilities(z, bank) → computes twin weights (sum=1.0)
+     - primary_twin(weights, bank) → returns highest-weight twin
+
+3. src.models.policy_heads ........................................  [MISSING]
+   ✗ Optional but recommended (gracefully degrades if missing)
+   ✗ Location: src/models/policy_heads.py
+   ✗ Class needed:
+     - TwinPolicyHeadSet(head_dir, default_temp)
+       - available() → bool
+       - score_twin(twin_id, X) → List[float]
+
+4. DATA/personas.json ..............................................  [MISSING]
+   ✗ Required by src/reasoning/llm_twin.py line 8
+   ✗ Location: DATA/personas.json
+   ✗ Format: {"personas": [{"id": "k0", "label": "...", ...}, ...]}
+   ✗ Sample: 3 personas (k0, k1, k2)
+
+5. DATA/twin_bank.json .............................................  [MISSING]
+   ✗ Required by src/models/mixture.py (to be created)
+   ✗ Location: DATA/twin_bank.json
+   ✗ Format: {"version": "v1", "twins": [{"id": "k0", "label": "...", "center": [...]}, ...]}
+   ✗ Sample: 3 twins with 15-D center embeddings
+
+
+ALL OTHER MODULES - WORKING:
+────────────────────────────────────────────────────────────────────────────────
+
+✓ src.features.candidate_features ................ src/features/candidate_features.py
+✓ src.reasoning.llm_twin ......................... src/reasoning/llm_twin.py
+✓ src.reasoning.reason_cache ..................... src/reasoning/reason_cache.py
+✓ src.reasoning.guard ............................ src/reasoning/guard.py
+✓ src.reasoning.llm_runtime ....................... src/reasoning/llm_runtime.py
+✓ src.profiles.loader ............................ src/profiles/loader.py
+✓ src.admin.store ............................... src/admin/store.py
+✓ src.airline.twin_card .......................... src/airline/twin_card.py
+✓ src.airline.schemas ............................ src/airline/schemas.py
+✓ src.airline.prompt_composer ..................... src/airline/prompt_composer.py
+✓ src.airline.llm_gateway ......................... src/airline/llm_gateway.py
+
+
+IMPLEMENTATION ROADMAP:
+────────────────────────────────────────────────────────────────────────────────
+
+PHASE 1 - CRITICAL (Minutes):
+  [ ] Create src/models/encoder.py with 4 functions
+  [ ] Create src/models/mixture.py with 3 functions  
+  [ ] Create src/models/policy_heads.py stub class
+  [ ] Create DATA/personas.json (mock data)
+  [ ] Create DATA/twin_bank.json (mock embeddings)
+  [ ] Run: make test
+
+PHASE 2 - OPTIONAL (Hours):
+  [ ] Implement real policy head training
+  [ ] Distill heads: python scripts/distill_policies.py
+  [ ] Load pre-trained heads from disk
+
+
+KEY REQUIREMENTS:
+────────────────────────────────────────────────────────────────────────────────
+
+✓ All embeddings must be deterministic (no randomness)
+✓ Mixture weights must sum to 1.0 (normalized)
+✓ Embeddings use cosine similarity + softmax
+✓ Default 3 twins: k0 (budget), k1 (premium), k2 (deal-hunter)
+✓ Embedding dimensions: 8-D behavior + 4-D psychographic + 3-D demographic = 15-D
+
+
+FILES AFFECTED:
+────────────────────────────────────────────────────────────────────────────────
+
+These imports will fail until modules are created:
+  - src/api/service.py lines 22-24 (encoder, mixture, policy_heads)
+  - TESTS/test_mixture.py (encoder, mixture)
+  - TESTS/test_counterfactual_fairness.py (encoder, mixture)
+  - TESTS/test_policy_heads.py (policy_heads)
+  - TESTS/test_phase_d_simulator.py (all three modules)
+
+
+REFERENCES:
+────────────────────────────────────────────────────────────────────────────────
+
+See full analysis in: MISSING_MODULES_ANALYSIS.md
+API location: /Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/src/api/service.py
+Test files: /Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0/TESTS/
+

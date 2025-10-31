@@ -1,0 +1,31 @@
+{
+  "z_or_user_id": "user_123",
+  "task": "choose_product",
+  "scenarios": [
+    {
+      "variant_id": "base",
+      "context_overrides": {},
+      "candidates": [
+        {"id": "product_1"},
+        {"id": "product_2"},
+        {"id": "product_3"}
+      ]
+    },
+    {
+      "variant_id": "discount",
+      "context_overrides": {
+        "price_mean": 50.0,
+        "promo_badge": "20% OFF"
+      },
+      "candidates": [
+        {"id": "product_1"},
+        {"id": "product_2"},
+        {"id": "product_3"}
+      ]
+    }
+  ],
+  "topk": 3,
+  "explain": "blend",
+  "deterministic": true,
+  "seed": 42
+}

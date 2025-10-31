@@ -74,7 +74,9 @@
       "Bash(echo:*)",
       "Bash(export:*)",
       "Bash(/Users/aniketniranjanmishra/Library/Python/3.9/bin/uvicorn:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(timeout 5 curl:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
