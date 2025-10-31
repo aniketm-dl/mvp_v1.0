@@ -1,0 +1,131 @@
+# Gitleaks configuration for secret scanning
+# Documentation: https://github.com/zricethezav/gitleaks
+
+title = "Darpan Labs Secret Scanning Configuration"
+
+# Allow list for files/paths to ignore
+[allowlist]
+paths = [
+    '''.env.example''',
+    '''docs/.*\.md''',
+    '''README\.md''',
+    '''.*\.example''',
+    '''.*\.template'''
+]
+
+# Custom rules for detecting secrets
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-proj-[A-Za-z0-9_\-]{48,}'''
+tags = ["key", "openai", "api"]
+severity = "HIGH"
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API Key"
+regex = '''sk-ant-[A-Za-z0-9_\-]{40,}'''
+tags = ["key", "anthropic", "api"]
+severity = "HIGH"
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+tags = ["key", "aws"]
+severity = "HIGH"
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z\/+]{40}['\"]'''
+tags = ["key", "aws", "secret"]
+severity = "HIGH"
+
+[[rules]]
+id = "github-pat"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[0-9a-zA-Z]{36,}'''
+tags = ["key", "github"]
+severity = "HIGH"
+
+[[rules]]
+id = "github-oauth"
+description = "GitHub OAuth Token"
+regex = '''gho_[0-9a-zA-Z]{36,}'''
+tags = ["key", "github", "oauth"]
+severity = "HIGH"
+
+[[rules]]
+id = "github-app-token"
+description = "GitHub App Token"
+regex = '''(ghu|ghs)_[0-9a-zA-Z]{36,}'''
+tags = ["key", "github"]
+severity = "HIGH"
+
+[[rules]]
+id = "github-refresh-token"
+description = "GitHub Refresh Token"
+regex = '''ghr_[0-9a-zA-Z]{36,}'''
+tags = ["key", "github"]
+severity = "HIGH"
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN (RSA|OPENSSH|DSA|EC|PGP) PRIVATE KEY-----'''
+tags = ["key", "private"]
+severity = "HIGH"
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_\-\s]?key|api[_\-\s]?secret|api[_\-\s]?token)(.{0,20})?['\"][0-9a-zA-Z\-_]{32,}['\"]'''
+tags = ["key", "api", "generic"]
+severity = "MEDIUM"
+[rules.allowlist]
+regexes = [
+    '''REPLACE''',
+    '''YOUR_''',
+    '''EXAMPLE''',
+    '''placeholder''',
+    '''template''',
+    '''sk-\.\.\.''',
+    '''xxx'''
+]
+
+# Global allowlist
+[allowlist.commits]
+# Allow commits with these messages to bypass scanning
+regexes = [
+    '''(?i)doc(s)?:.*''',
+    '''(?i)test:.*''',
+    '''(?i)chore:.*example'''
+]
+
+# File extensions to scan
+[scan]
+include = [
+    "*.py",
+    "*.js",
+    "*.jsx",
+    "*.ts",
+    "*.tsx",
+    "*.json",
+    "*.yaml",
+    "*.yml",
+    "*.toml",
+    "*.ini",
+    "*.cfg",
+    "*.conf",
+    "*.config",
+    "*.env",
+    "*.sh",
+    "*.bash",
+    "*.zsh",
+    "*.fish",
+    "*.md",
+    "*.txt",
+    "*.xml",
+    "*.html"
+]

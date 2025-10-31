@@ -106,7 +106,7 @@ pkill python3
 # Backend:
 cd /Users/aniketniranjanmishra/Desktop/Darpan\ Labs/mvp_v1.0
 export PYTHONPATH="/Users/aniketniranjanmishra/Desktop/Darpan Labs/mvp_v1.0"
-export OPENAI_API_KEY="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"
+source .env  # Load API keys from .env file
 /Users/aniketniranjanmishra/Library/Python/3.9/bin/uvicorn src.api.service_airline:app --host 0.0.0.0 --port 8000 &
 
 # Frontend:
