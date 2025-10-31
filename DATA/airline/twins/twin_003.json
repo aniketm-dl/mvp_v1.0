@@ -1,0 +1,95 @@
+{
+  "id": "twin_003",
+  "label": "Punctuality sensitive 55plus female leisure traveler (eco)",
+  "demographics": {
+    "gender": "Female",
+    "age": 78,
+    "age_band": "55+"
+  },
+  "travel_profile": {
+    "customer_type": "Disloyal Customer",
+    "type_of_travel": "Personal Travel",
+    "flight_class": "Eco",
+    "flight_distance": 4306,
+    "distance_band": "long",
+    "delay_band": "moderate"
+  },
+  "psychographics": [
+    "punctuality_sensitive",
+    "value_conscious"
+  ],
+  "recent_experience": {
+    "inflight_wifi_service": 4,
+    "departure_arrival_time_convenient": 3,
+    "ease_of_online_booking": 4,
+    "gate_location": 3,
+    "food_and_drink": 3,
+    "online_boarding": 3,
+    "seat_comfort": 2,
+    "inflight_entertainment": 2,
+    "on_board_service": 2,
+    "leg_room_service": 4,
+    "baggage_handling": 3,
+    "checkin_service": 3,
+    "inflight_service": 2,
+    "cleanliness": 2
+  },
+  "cohort_key": "55+_Female_Personal_Travel_Eco_long",
+  "cohort_priors": {
+    "cohort_key": "55+_Female_Personal_Travel_Eco_long",
+    "n": 9,
+    "satisfaction_rate": 0.0,
+    "rating_means": {
+      "inflight_wifi_service": 2.67,
+      "departure_arrival_time_convenient": 2.78,
+      "ease_of_online_booking": 3.11,
+      "gate_location": 2.89,
+      "food_and_drink": 2.89,
+      "online_boarding": 2.67,
+      "seat_comfort": 2.56,
+      "inflight_entertainment": 3.0,
+      "on_board_service": 2.56,
+      "leg_room_service": 3.0,
+      "baggage_handling": 2.89,
+      "checkin_service": 2.89,
+      "inflight_service": 2.33,
+      "cleanliness": 3.22
+    },
+    "rating_stds": {
+      "inflight_wifi_service": 0.71,
+      "departure_arrival_time_convenient": 1.09,
+      "ease_of_online_booking": 0.6,
+      "gate_location": 0.78,
+      "food_and_drink": 0.6,
+      "online_boarding": 0.71,
+      "seat_comfort": 0.53,
+      "inflight_entertainment": 0.71,
+      "on_board_service": 0.53,
+      "leg_room_service": 0.71,
+      "baggage_handling": 0.6,
+      "checkin_service": 1.05,
+      "inflight_service": 0.87,
+      "cleanliness": 0.83
+    },
+    "top_positive_drivers": [],
+    "top_negative_drivers": [],
+    "price_sensitivity": "high",
+    "dominant_tags": [
+      "punctuality_sensitive",
+      "value_conscious"
+    ],
+    "discount_ladder_hints": {
+      "extra_legroom": 0.3,
+      "wifi_access": 0.35,
+      "lounge_access": 0.4,
+      "priority_boarding": 0.1,
+      "extra_baggage": 0.35
+    }
+  },
+  "metadata": {
+    "created_at": "2025-10-28T13:02:09.902455",
+    "data_source": "airline_satisfaction_survey",
+    "row_id": 120,
+    "satisfaction_label": "dissatisfied"
+  }
+}

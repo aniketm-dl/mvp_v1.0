@@ -1,0 +1,42 @@
+{
+  "id": "twin_007",
+  "label": "Typical 45-54 female business traveler (eco)",
+  "demographics": {
+    "gender": "Female",
+    "age": 53,
+    "age_band": "45-54"
+  },
+  "travel_profile": {
+    "customer_type": "Loyal Customer",
+    "type_of_travel": "Business travel",
+    "flight_class": "Eco",
+    "flight_distance": 3635,
+    "distance_band": "long",
+    "delay_band": "minor"
+  },
+  "psychographics": [],
+  "recent_experience": {
+    "inflight_wifi_service": 3,
+    "departure_arrival_time_convenient": 3,
+    "ease_of_online_booking": 2,
+    "gate_location": 4,
+    "food_and_drink": 2,
+    "online_boarding": 3,
+    "seat_comfort": 5,
+    "inflight_entertainment": 4,
+    "on_board_service": 2,
+    "leg_room_service": 3,
+    "baggage_handling": 2,
+    "checkin_service": 4,
+    "inflight_service": 5,
+    "cleanliness": 2
+  },
+  "cohort_key": "45-54_Female_Business_travel_Eco_long",
+  "cohort_priors": {},
+  "metadata": {
+    "created_at": "2025-10-28T13:02:09.903664",
+    "data_source": "airline_satisfaction_survey",
+    "row_id": 67,
+    "satisfaction_label": "satisfied"
+  }
+}

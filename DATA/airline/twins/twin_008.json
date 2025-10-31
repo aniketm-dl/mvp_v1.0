@@ -1,0 +1,44 @@
+{
+  "id": "twin_008",
+  "label": "Punctuality sensitive 35-44 female leisure traveler (eco)",
+  "demographics": {
+    "gender": "Female",
+    "age": 37,
+    "age_band": "35-44"
+  },
+  "travel_profile": {
+    "customer_type": "Loyal Customer",
+    "type_of_travel": "Personal Travel",
+    "flight_class": "Eco",
+    "flight_distance": 986,
+    "distance_band": "short",
+    "delay_band": "minor"
+  },
+  "psychographics": [
+    "punctuality_sensitive"
+  ],
+  "recent_experience": {
+    "inflight_wifi_service": 3,
+    "departure_arrival_time_convenient": 4,
+    "ease_of_online_booking": 1,
+    "gate_location": 2,
+    "food_and_drink": 2,
+    "online_boarding": 4,
+    "seat_comfort": 3,
+    "inflight_entertainment": 3,
+    "on_board_service": 4,
+    "leg_room_service": 1,
+    "baggage_handling": 3,
+    "checkin_service": 3,
+    "inflight_service": 4,
+    "cleanliness": 4
+  },
+  "cohort_key": "35-44_Female_Personal_Travel_Eco_short",
+  "cohort_priors": {},
+  "metadata": {
+    "created_at": "2025-10-28T13:02:09.903960",
+    "data_source": "airline_satisfaction_survey",
+    "row_id": 104,
+    "satisfaction_label": "satisfied"
+  }
+}

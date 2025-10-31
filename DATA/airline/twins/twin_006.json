@@ -1,0 +1,44 @@
+{
+  "id": "twin_006",
+  "label": "Value conscious 35-44 male leisure traveler (eco-plus)",
+  "demographics": {
+    "gender": "Male",
+    "age": 41,
+    "age_band": "35-44"
+  },
+  "travel_profile": {
+    "customer_type": "Disloyal Customer",
+    "type_of_travel": "Personal Travel",
+    "flight_class": "Eco Plus",
+    "flight_distance": 2669,
+    "distance_band": "long",
+    "delay_band": "minor"
+  },
+  "psychographics": [
+    "value_conscious"
+  ],
+  "recent_experience": {
+    "inflight_wifi_service": 3,
+    "departure_arrival_time_convenient": 3,
+    "ease_of_online_booking": 1,
+    "gate_location": 3,
+    "food_and_drink": 3,
+    "online_boarding": 3,
+    "seat_comfort": 2,
+    "inflight_entertainment": 3,
+    "on_board_service": 3,
+    "leg_room_service": 2,
+    "baggage_handling": 3,
+    "checkin_service": 3,
+    "inflight_service": 4,
+    "cleanliness": 3
+  },
+  "cohort_key": "35-44_Male_Personal_Travel_Eco_Plus_long",
+  "cohort_priors": {},
+  "metadata": {
+    "created_at": "2025-10-28T13:02:09.903292",
+    "data_source": "airline_satisfaction_survey",
+    "row_id": 87,
+    "satisfaction_label": "dissatisfied"
+  }
+}

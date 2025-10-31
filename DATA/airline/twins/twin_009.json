@@ -1,0 +1,45 @@
+{
+  "id": "twin_009",
+  "label": "Punctuality sensitive 25-34 male business traveler (business)",
+  "demographics": {
+    "gender": "Male",
+    "age": 26,
+    "age_band": "25-34"
+  },
+  "travel_profile": {
+    "customer_type": "Loyal Customer",
+    "type_of_travel": "Business travel",
+    "flight_class": "Business",
+    "flight_distance": 3316,
+    "distance_band": "long",
+    "delay_band": "minor"
+  },
+  "psychographics": [
+    "punctuality_sensitive",
+    "business_oriented"
+  ],
+  "recent_experience": {
+    "inflight_wifi_service": 5,
+    "departure_arrival_time_convenient": 4,
+    "ease_of_online_booking": 4,
+    "gate_location": 4,
+    "food_and_drink": 4,
+    "online_boarding": 4,
+    "seat_comfort": 3,
+    "inflight_entertainment": 3,
+    "on_board_service": 3,
+    "leg_room_service": 4,
+    "baggage_handling": 4,
+    "checkin_service": 5,
+    "inflight_service": 3,
+    "cleanliness": 4
+  },
+  "cohort_key": "25-34_Male_Business_travel_Business_long",
+  "cohort_priors": {},
+  "metadata": {
+    "created_at": "2025-10-28T13:02:09.904233",
+    "data_source": "airline_satisfaction_survey",
+    "row_id": 219,
+    "satisfaction_label": "dissatisfied"
+  }
+}

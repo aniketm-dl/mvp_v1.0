@@ -1,0 +1,119 @@
+{
+  "id": "twin_012",
+  "label": "Punctuality sensitive 55plus male business traveler (eco-plus)",
+  "demographics": {
+    "gender": "Male",
+    "age": 71,
+    "age_band": "55+"
+  },
+  "travel_profile": {
+    "customer_type": "Loyal Customer",
+    "type_of_travel": "Business travel",
+    "flight_class": "Eco Plus",
+    "flight_distance": 3469,
+    "distance_band": "long",
+    "delay_band": "minor"
+  },
+  "psychographics": [
+    "punctuality_sensitive"
+  ],
+  "recent_experience": {
+    "inflight_wifi_service": 3,
+    "departure_arrival_time_convenient": 4,
+    "ease_of_online_booking": 4,
+    "gate_location": 4,
+    "food_and_drink": 2,
+    "online_boarding": 3,
+    "seat_comfort": 3,
+    "inflight_entertainment": 2,
+    "on_board_service": 3,
+    "leg_room_service": 3,
+    "baggage_handling": 4,
+    "checkin_service": 4,
+    "inflight_service": 3,
+    "cleanliness": 3
+  },
+  "cohort_key": "55+_Male_Business_travel_Eco_Plus_long",
+  "cohort_priors": {
+    "cohort_key": "55+_Male_Business_travel_Eco_Plus_long",
+    "n": 7,
+    "satisfaction_rate": 0.143,
+    "rating_means": {
+      "inflight_wifi_service": 3.0,
+      "departure_arrival_time_convenient": 3.0,
+      "ease_of_online_booking": 3.14,
+      "gate_location": 3.43,
+      "food_and_drink": 2.43,
+      "online_boarding": 2.71,
+      "seat_comfort": 3.14,
+      "inflight_entertainment": 2.86,
+      "on_board_service": 3.29,
+      "leg_room_service": 2.86,
+      "baggage_handling": 2.71,
+      "checkin_service": 2.57,
+      "inflight_service": 3.43,
+      "cleanliness": 3.14
+    },
+    "rating_stds": {
+      "inflight_wifi_service": 1.15,
+      "departure_arrival_time_convenient": 1.29,
+      "ease_of_online_booking": 1.07,
+      "gate_location": 0.79,
+      "food_and_drink": 0.79,
+      "online_boarding": 0.49,
+      "seat_comfort": 0.69,
+      "inflight_entertainment": 0.69,
+      "on_board_service": 1.11,
+      "leg_room_service": 0.38,
+      "baggage_handling": 0.76,
+      "checkin_service": 1.51,
+      "inflight_service": 0.53,
+      "cleanliness": 0.69
+    },
+    "top_positive_drivers": [
+      {
+        "service": "baggage_handling",
+        "correlation": 0.6943650748294136
+      },
+      {
+        "service": "checkin_service",
+        "correlation": 0.3857583749052297
+      },
+      {
+        "service": "ease_of_online_booking",
+        "correlation": 0.3273268353539886
+      }
+    ],
+    "top_negative_drivers": [
+      {
+        "service": "inflight_entertainment",
+        "correlation": -0.50709255283711
+      },
+      {
+        "service": "inflight_service",
+        "correlation": -0.32732683535398865
+      },
+      {
+        "service": "food_and_drink",
+        "correlation": -0.22237479499833032
+      }
+    ],
+    "price_sensitivity": "medium",
+    "dominant_tags": [
+      "punctuality_sensitive"
+    ],
+    "discount_ladder_hints": {
+      "extra_legroom": 0.25,
+      "wifi_access": 0.25,
+      "lounge_access": 0.3,
+      "priority_boarding": 0.1,
+      "extra_baggage": 0.3
+    }
+  },
+  "metadata": {
+    "created_at": "2025-10-28T13:02:09.904993",
+    "data_source": "airline_satisfaction_survey",
+    "row_id": 200,
+    "satisfaction_label": "satisfied"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "twin_004",
+  "label": "Typical 55plus male business traveler (eco-plus)",
+  "demographics": {
+    "gender": "Male",
+    "age": 77,
+    "age_band": "55+"
+  },
+  "travel_profile": {
+    "customer_type": "Disloyal Customer",
+    "type_of_travel": "Business travel",
+    "flight_class": "Eco Plus",
+    "flight_distance": 1373,
+    "distance_band": "medium",
+    "delay_band": "minor"
+  },
+  "psychographics": [],
+  "recent_experience": {
+    "inflight_wifi_service": 3,
+    "departure_arrival_time_convenient": 3,
+    "ease_of_online_booking": 2,
+    "gate_location": 3,
+    "food_and_drink": 2,
+    "online_boarding": 3,
+    "seat_comfort": 2,
+    "inflight_entertainment": 3,
+    "on_board_service": 4,
+    "leg_room_service": 4,
+    "baggage_handling": 1,
+    "checkin_service": 3,
+    "inflight_service": 2,
+    "cleanliness": 5
+  },
+  "cohort_key": "55+_Male_Business_travel_Eco_Plus_medium",
+  "cohort_priors": {},
+  "metadata": {
+    "created_at": "2025-10-28T13:02:09.902726",
+    "data_source": "airline_satisfaction_survey",
+    "row_id": 177,
+    "satisfaction_label": "dissatisfied"
+  }
+}
