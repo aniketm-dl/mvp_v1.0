@@ -66,3 +66,4 @@ colab_packages/
 # AWS credentials (safety)
 *.pem
 credentials.json
+.aws_credentials_reference.txt
