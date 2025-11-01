@@ -78,7 +78,16 @@
       "Bash(timeout 5 curl:*)",
       "Bash(git fetch:*)",
       "Bash(/tmp/current_commit_info.txt)",
-      "Bash(zip:*)"
+      "Bash(zip:*)",
+      "Bash(PYTHONPATH=. python3 -m pytest TESTS/test_clustering_system.py -v)",
+      "Bash(pip3 show scikit-learn)",
+      "Bash(pip3 install umap-learn rich scipy --quiet)",
+      "Bash(PYTHONPATH=. timeout 30 python3:*)",
+      "Bash(PYTHONPATH=. python3 scripts/cluster_personas.py --config CONFIGS/clustering/cluster_config.yaml)",
+      "Bash(PYTHONPATH=. uvicorn:*)",
+      "Bash(pip3 install:*)",
+      "Bash(PYTHONPATH=. python3:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

@@ -122,3 +122,128 @@ class MetricsResponse(BaseModel):
     training_info: Dict[str, Any]
     twin_metrics: List[TwinMetrics]
     dataset_info: Dict[str, Any]
+
+
+# ============================================================================
+# USER ASSIGNMENT & EXPLAINABILITY SCHEMAS
+# ============================================================================
+
+class FeatureImportance(BaseModel):
+    """Feature importance for persona assignment"""
+    feature: str
+    importance: float
+    user_value: float
+    twin_value: float
+    difference: float
+
+
+class TwinDistance(BaseModel):
+    """Distance from user to a twin center"""
+    twin_id: str
+    label: str
+    distance: float
+    similarity: float
+
+
+class PrimaryTwinInfo(BaseModel):
+    """Detailed info about assigned twin"""
+    twin_id: str
+    label: str
+    distance: float
+    similarity: float
+
+
+class UserAssignmentResponse(BaseModel):
+    """Complete explanation for user's persona assignment"""
+    user_id: str
+    primary_twin: PrimaryTwinInfo
+    feature_importance: List[FeatureImportance]
+    natural_language: str
+    all_distances: List[TwinDistance]
+    alternatives: List[TwinDistance]
+    confidence: float
+    metadata: Dict[str, Any]
+
+
+# ============================================================================
+# CLUSTER VISUALIZATION SCHEMAS
+# ============================================================================
+
+class ClusterPoint(BaseModel):
+    """2D point in cluster visualization"""
+    user_id: str
+    x: float
+    y: float
+    twin_id: str
+    label: str
+
+
+class ClusterCenter(BaseModel):
+    """Cluster center in 2D projection"""
+    twin_id: str
+    label: str
+    x: float
+    y: float
+    size: int  # Number of users in cluster
+
+
+class ClusterMapResponse(BaseModel):
+    """Cluster map visualization data"""
+    points: List[ClusterPoint]
+    centers: List[ClusterCenter]
+    projection_method: str
+    metadata: Dict[str, Any]
+
+
+# ============================================================================
+# HIERARCHICAL CLUSTERING SCHEMAS
+# ============================================================================
+
+class DendrogramData(BaseModel):
+    """Dendrogram visualization data"""
+    icoord: List[List[float]]
+    dcoord: List[List[float]]
+    ivl: List[str]
+    leaves: List[int]
+    color_list: List[str]
+
+
+class DecisionTreeNode(BaseModel):
+    """Decision tree node for persona splits"""
+    type: Literal["decision", "leaf"]
+    feature: Optional[str] = None
+    threshold: Optional[float] = None
+    samples: int
+    left: Optional['DecisionTreeNode'] = None
+    right: Optional['DecisionTreeNode'] = None
+    class_label: Optional[str] = None
+    value: Optional[List[float]] = None
+
+    model_config = ConfigDict(extra="allow")
+
+
+class TwinPair(BaseModel):
+    """Twin pair with distance"""
+    twin1: str
+    twin2: str
+    distance: float
+
+
+class ClusterSummary(BaseModel):
+    """Summary statistics for a cluster"""
+    twin_id: str
+    label: str
+    n_users: int
+    percentage: float
+    cohesion: float
+    top_features: List[Dict[str, Any]]
+    center: List[float]
+
+
+class HierarchyResponse(BaseModel):
+    """Hierarchical clustering analysis"""
+    hierarchical_clustering: Dict[str, Any]
+    decision_tree: Dict[str, Any]
+    persona_analysis: Dict[str, Any]
+    cluster_summaries: List[ClusterSummary]
+    metadata: Dict[str, Any]

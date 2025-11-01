@@ -14,7 +14,8 @@ from src.common.schemas import (
     SimulateRequest, SimulateResponse, ScenarioResult, TwinPick,
     MatchRequest, MatchResponse, TwinChatRequest, TwinChatResponse,
     TwinDecideRequest, TwinDecideResponse, TwinDecision,
-    MetricsResponse, ValidationMetrics, TwinMetrics
+    MetricsResponse, ValidationMetrics, TwinMetrics,
+    UserAssignmentResponse, ClusterMapResponse, HierarchyResponse
 )
 from src.common.config import allowed_mutables
 from src.common.determinism import set_global_seed, canonical_sort
@@ -623,21 +624,56 @@ OFFER_FACTORIES = {
 
 @app.get("/airline/twins")
 def airline_twins_list() -> Dict[str, Any]:
-    """List all available airline twins."""
-    if not _AIRLINE_TWINS_DIR.exists():
-        return {"twins": [], "error": "Airline twins directory not found"}
+    """List all available airline twins from clustering system with REAL statistics from airline data."""
+    from src.utils.cluster_stats import calculate_cluster_statistics
+
+    # Load twins from clustering system (generated from real airline passenger data)
+    twin_bank = load_twin_bank()
+
+    # Calculate real statistics for each cluster from actual passenger data
+    cluster_stats = calculate_cluster_statistics(twin_bank)
 
     twins = []
-    for twin_file in sorted(_AIRLINE_TWINS_DIR.glob("twin_*.json")):
-        with open(twin_file) as f:
-            twin_data = json.load(f)
-            twins.append({
-                "id": twin_data["id"],
-                "label": twin_data["label"],
-                "demographics": twin_data["demographics"],
-                "psychographics": twin_data["psychographics"],
-                "travel_profile": twin_data["travel_profile"]
-            })
+    for twin in twin_bank.get("twins", []):
+        twin_id = twin["id"]
+        stats = cluster_stats.get(twin_id, {})
+
+        # Get statistics or use defaults
+        demographics = stats.get("demographics", {})
+        travel_profile = stats.get("travel_profile", {})
+        psychographics = stats.get("psychographics", {})
+        service_ratings = stats.get("service_ratings", {})
+        cluster_size = stats.get("cluster_size", 0)
+
+        # Build detailed twin card with real statistics
+        twins.append({
+            "id": twin_id,
+            "label": twin.get("label", f"Persona {twin_id}"),
+            "demographics": {
+                "gender": demographics.get("gender", "Unknown"),
+                "age": demographics.get("age", 0),
+                "age_band": demographics.get("age_band", "Unknown"),
+                "description": f"{demographics.get('gender', 'Unknown')}, {demographics.get('age_band', 'Unknown')}"
+            },
+            "psychographics": {
+                "tags": psychographics.get("tags", []),
+                "description": ", ".join(psychographics.get("tags", [])) if psychographics.get("tags") else "Balanced preferences"
+            },
+            "travel_profile": {
+                "customer_type": travel_profile.get("customer_type", "Unknown"),
+                "type_of_travel": travel_profile.get("type_of_travel", "Unknown"),
+                "flight_class": travel_profile.get("flight_class", "Unknown"),
+                "distance_band": travel_profile.get("distance_band", "Unknown"),
+                "description": f"{travel_profile.get('type_of_travel', 'Unknown')}, {travel_profile.get('flight_class', 'Unknown')} class"
+            },
+            "service_ratings": service_ratings,
+            "cluster_size": cluster_size,
+            "metadata": {
+                "source": "k-means_clustering",
+                "data_source": "airline_passenger_survey",
+                "passengers_in_cluster": cluster_size
+            }
+        })
 
     return {"twins": twins, "count": len(twins)}
 
@@ -756,3 +792,242 @@ def airline_decisions_export(format: str = "json") -> Any:
 
     else:
         raise HTTPException(status_code=422, detail="Format must be 'csv' or 'json'")
+
+
+# ============================================================================
+# USER ASSIGNMENT & EXPLAINABILITY ENDPOINTS
+# ============================================================================
+
+@app.get("/user/{user_id}/assignment", response_model=UserAssignmentResponse)
+async def get_user_assignment(user_id: str):
+    """
+    Get detailed persona assignment explanation for a user.
+
+    Returns feature importance, distances to all twins, and natural language explanation.
+    """
+    from src.metrics.explainability import explain_assignment
+    from src.models.mixture import get_all_twin_centers, get_twin_labels, compute_all_distances
+    import numpy as np
+
+    # Build user embedding
+    # For real implementation, would load CTA history for user
+    # For now, use mock profile
+    profile_vec = profile_vec_for_user(user_id)
+    if profile_vec is None:
+        profile_vec = [0.5, 0.3, 0.3, 0.2, 0.4, 0.5, 0.5]  # Default 7-D profile
+
+    # Create mock CTA behavior (in production, load from database)
+    z_behavior = np.array([0.3, 0.2, 0.15, 0.1, 0.1, 0.05, 0.08, 0.02])
+
+    # Extract psychographic and demographic from profile
+    z_psych = np.array(profile_vec[:4]) if len(profile_vec) >= 4 else np.array([0.5, 0.3, 0.3, 0.2])
+    z_demo = np.array(profile_vec[4:7]) if len(profile_vec) >= 7 else np.array([0.4, 0.5, 0.5])
+
+    # Fuse into 15-D embedding
+    z = np.concatenate([z_behavior, z_psych, z_demo])
+
+    # Load twin bank
+    bank = load_twin_bank()
+    twin_centers_dict = get_all_twin_centers(bank)
+    twin_labels_dict = get_twin_labels(bank)
+
+    # Convert to arrays
+    twin_ids = sorted(twin_centers_dict.keys())
+    twin_centers = np.array([twin_centers_dict[tid] for tid in twin_ids])
+    twin_labels = [twin_labels_dict[tid] for tid in twin_ids]
+
+    # Compute responsibilities to find assigned twin
+    resp = responsibilities(z.tolist(), bank)
+    assigned_twin_id = max(resp, key=resp.get)
+    assigned_twin_idx = twin_ids.index(assigned_twin_id)
+
+    # Feature names
+    feature_names = [
+        "search_freq", "filter_freq", "sort_freq", "view_freq",
+        "compare_freq", "add_to_cart_freq", "purchase_freq", "other_freq",
+        "price_sensitivity", "quality_focus", "convenience_priority", "brand_loyalty",
+        "age_group", "income_level", "location_type"
+    ]
+
+    # Generate explanation
+    explanation = explain_assignment(
+        z,
+        assigned_twin_idx,
+        twin_centers,
+        twin_labels,
+        feature_names,
+        top_k_features=5,
+        top_k_alternatives=3,
+    )
+
+    # Convert to response format
+    return UserAssignmentResponse(
+        user_id=user_id,
+        primary_twin=explanation["primary_twin"],
+        feature_importance=explanation["feature_importance"],
+        natural_language=explanation["natural_language"],
+        all_distances=explanation["all_distances"],
+        alternatives=explanation["alternatives"],
+        confidence=explanation["confidence"],
+        metadata=explanation["metadata"],
+    )
+
+
+# ============================================================================
+# CLUSTER VISUALIZATION ENDPOINTS
+# ============================================================================
+
+@app.get("/metrics/cluster_map", response_model=ClusterMapResponse)
+async def get_cluster_map(projection: str = "umap"):
+    """
+    Get 2D cluster map visualization data.
+
+    Args:
+        projection: Projection method ("umap", "tsne", "pca")
+
+    Returns:
+        Cluster map with user points and cluster centers
+    """
+    import numpy as np
+
+    try:
+        if projection == "umap":
+            import umap
+            reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric="cosine", random_state=42)
+        elif projection == "tsne":
+            from sklearn.manifold import TSNE
+            reducer = TSNE(n_components=2, perplexity=30, random_state=42)
+        elif projection == "pca":
+            from sklearn.decomposition import PCA
+            reducer = PCA(n_components=2, random_state=42)
+        else:
+            raise HTTPException(status_code=422, detail=f"Unknown projection method: {projection}")
+    except ImportError:
+        raise HTTPException(status_code=500, detail=f"Required library for {projection} not installed")
+
+    # Load twin bank
+    bank = load_twin_bank()
+
+    # Generate mock user data (in production, load from database)
+    # Create users around each twin center
+    from src.models.mixture import get_all_twin_centers, get_twin_labels
+
+    twin_centers_dict = get_all_twin_centers(bank)
+    twin_labels_dict = get_twin_labels(bank)
+
+    twin_ids = sorted(twin_centers_dict.keys())
+    twin_centers = np.array([twin_centers_dict[tid] for tid in twin_ids])
+    twin_labels = [twin_labels_dict[tid] for tid in twin_ids]
+
+    # Generate mock users
+    n_users_per_twin = 40
+    all_embeddings = []
+    all_labels = []
+    all_user_ids = []
+
+    for i, center in enumerate(twin_centers):
+        # Add noise around center
+        noise = np.random.normal(0, 0.1, size=(n_users_per_twin, len(center)))
+        user_embeddings = center + noise
+        all_embeddings.append(user_embeddings)
+        all_labels.extend([twin_ids[i]] * n_users_per_twin)
+        all_user_ids.extend([f"u{i}_{j}" for j in range(n_users_per_twin)])
+
+    embeddings = np.vstack(all_embeddings)
+
+    # Project to 2D
+    embeddings_2d = reducer.fit_transform(embeddings)
+    centers_2d = reducer.transform(twin_centers)
+
+    # Build response
+    points = []
+    for i, (user_id, label) in enumerate(zip(all_user_ids, all_labels)):
+        points.append({
+            "user_id": user_id,
+            "x": float(embeddings_2d[i, 0]),
+            "y": float(embeddings_2d[i, 1]),
+            "twin_id": label,
+            "label": twin_labels_dict[label],
+        })
+
+    centers = []
+    for i, twin_id in enumerate(twin_ids):
+        centers.append({
+            "twin_id": twin_id,
+            "label": twin_labels[i],
+            "x": float(centers_2d[i, 0]),
+            "y": float(centers_2d[i, 1]),
+            "size": n_users_per_twin,
+        })
+
+    return ClusterMapResponse(
+        points=points,
+        centers=centers,
+        projection_method=projection,
+        metadata={
+            "n_users": len(embeddings),
+            "n_clusters": len(twin_centers),
+            "embedding_dim": embeddings.shape[1],
+        }
+    )
+
+
+@app.get("/metrics/hierarchy", response_model=HierarchyResponse)
+async def get_hierarchy():
+    """
+    Get hierarchical clustering analysis and decision tree.
+
+    Returns dendrogram data, decision tree, and persona analysis.
+    """
+    from src.metrics.hierarchy import generate_hierarchy_visualization_data
+    from src.models.mixture import get_all_twin_centers, get_twin_labels
+    import numpy as np
+
+    # Load twin bank
+    bank = load_twin_bank()
+    twin_centers_dict = get_all_twin_centers(bank)
+    twin_labels_dict = get_twin_labels(bank)
+
+    twin_ids = sorted(twin_centers_dict.keys())
+    twin_centers = np.array([twin_centers_dict[tid] for tid in twin_ids])
+    twin_labels = [twin_labels_dict[tid] for tid in twin_ids]
+
+    # Generate mock user embeddings (in production, load from database)
+    n_users_per_twin = 40
+    all_embeddings = []
+    all_labels = []
+
+    for i, center in enumerate(twin_centers):
+        noise = np.random.normal(0, 0.1, size=(n_users_per_twin, len(center)))
+        user_embeddings = center + noise
+        all_embeddings.append(user_embeddings)
+        all_labels.extend([i] * n_users_per_twin)
+
+    embeddings = np.vstack(all_embeddings)
+    labels = np.array(all_labels)
+
+    # Feature names
+    feature_names = [
+        "search_freq", "filter_freq", "sort_freq", "view_freq",
+        "compare_freq", "add_to_cart_freq", "purchase_freq", "other_freq",
+        "price_sensitivity", "quality_focus", "convenience_priority", "brand_loyalty",
+        "age_group", "income_level", "location_type"
+    ]
+
+    # Configuration
+    config = {
+        "hierarchical_linkage": "ward",
+        "hierarchical_metric": "euclidean",
+    }
+
+    # Generate hierarchy data
+    hierarchy_data = generate_hierarchy_visualization_data(
+        embeddings,
+        labels,
+        twin_centers,
+        twin_labels,
+        feature_names,
+        config,
+    )
+
+    return HierarchyResponse(**hierarchy_data)

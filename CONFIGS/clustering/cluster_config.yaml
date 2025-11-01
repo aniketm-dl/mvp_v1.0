@@ -1,0 +1,162 @@
+# Clustering Configuration for Persona Identification
+# This config controls the unsupervised clustering pipeline that generates digital twin personas
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CLUSTERING ALGORITHM SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Number of personas/twins to create - EXACTLY 20 twins will be generated
+# Using K-Means guarantees exactly this many clusters from REAL airline data
+max_clusters: 20
+
+# Whether to auto-determine optimal number of clusters
+# Set to FALSE to force exactly 20 clusters (no auto-determination)
+auto_determine_k: false
+
+# Clustering method to use
+# Options: "kmeans", "gmm" (Gaussian Mixture Model), "hdbscan", "hierarchical"
+# Using K-Means to guarantee exactly 20 clusters from real airline passenger data
+clustering_method: "kmeans"
+
+# Minimum number of users required per persona (for quality control)
+# 400 passengers / 20 clusters = 20 passengers per cluster minimum
+min_cluster_size: 20
+
+# Random seed for reproducibility
+random_seed: 42
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FEATURE ENGINEERING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Weights for each embedding component (must sum to 1.0)
+feature_weights:
+  behavior: 0.5      # 8-D behavioral features from CTA sequences
+  psychographic: 0.3 # 4-D psychographic features
+  demographic: 0.2   # 3-D demographic features
+
+# Whether to normalize features before clustering (recommended: true)
+normalize_features: true
+
+# Whether to apply PCA/dimensionality reduction before clustering
+apply_pca: false
+pca_components: 10  # Only used if apply_pca is true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# QUALITY GATES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Minimum separation quality thresholds
+separation_thresholds:
+  silhouette_min: 0.35   # Cluster cohesion (higher is better, range: -1 to 1)
+  mean_jsd_min: 0.10     # Twin differentiation (higher is better)
+  ari_min: 0.80          # Stability across runs (higher is better, range: 0 to 1)
+
+# Whether to fail the clustering run if quality gates don't pass
+fail_on_low_quality: false
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LLM SETTINGS (for persona description generation)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# LLM model to use for generating persona names and descriptions
+llm_model: "gpt-4"  # Options: "gpt-4", "gpt-3.5-turbo", "claude-3-sonnet", etc.
+
+# Temperature for LLM generation (0 = deterministic, 1 = creative)
+llm_temperature: 0.7
+
+# Maximum tokens for persona descriptions
+llm_max_tokens: 150
+
+# Whether to generate persona descriptions using LLM (if false, uses templates)
+generate_llm_descriptions: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HIERARCHICAL CLUSTERING SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Linkage method for hierarchical clustering
+# Options: "ward", "complete", "average", "single"
+hierarchical_linkage: "ward"
+
+# Distance metric for hierarchical clustering
+# Options: "euclidean", "cosine", "manhattan"
+hierarchical_metric: "euclidean"
+
+# Whether to generate dendrogram visualization
+generate_dendrogram: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ADVANCED CLUSTERING PARAMETERS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# K-Means specific settings
+kmeans:
+  n_init: 50           # Number of initializations (higher = more stable)
+  max_iter: 300        # Maximum iterations per run
+  algorithm: "lloyd"   # Options: "lloyd", "elkan"
+
+# GMM specific settings
+gmm:
+  covariance_type: "full"  # Options: "full", "tied", "diag", "spherical"
+  n_init: 10
+  max_iter: 100
+  reg_covar: 1e-6     # Regularization to prevent singular covariance matrices
+
+# HDBSCAN specific settings
+hdbscan:
+  min_cluster_size: 10  # Reduced to allow smaller natural clusters
+  min_samples: 3        # Reduced for more sensitivity
+  cluster_selection_epsilon: 0.0
+  metric: "euclidean"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VISUALIZATION & REPORTING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# 2D projection method for visualization
+# Options: "umap", "tsne", "pca"
+projection_method: "umap"
+
+# UMAP specific settings
+umap:
+  n_neighbors: 15
+  min_dist: 0.1
+  metric: "cosine"
+
+# t-SNE specific settings
+tsne:
+  perplexity: 30
+  learning_rate: 200
+  n_iter: 1000
+
+# Whether to generate HTML report
+generate_html_report: true
+
+# Whether to save intermediate artifacts (embeddings, distances, etc.)
+save_artifacts: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OUTPUT PATHS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+output:
+  twin_bank: "DATA/twin_bank.json"
+  personas: "DATA/personas.json"
+  report: "artifacts/clustering_report.md"
+  artifacts_dir: "artifacts/clustering/"
+  visualizations_dir: "artifacts/clustering/viz/"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROGRESS TRACKING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Verbosity level: "quiet", "normal", "verbose", "debug"
+verbosity: "verbose"
+
+# Whether to show progress bars
+show_progress: true
+
+# Whether to log to file
+log_to_file: true
+log_file: "artifacts/clustering/clustering.log"

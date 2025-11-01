@@ -1,0 +1,24 @@
+=== Clustering Pipeline Log - 2025-11-01T20:15:56.675549 ===
+
+[2025-11-01T20:15:56.687027] [INFO] Loading REAL airline passenger data...
+[2025-11-01T20:16:02.418055] [INFO] ✓ Loaded 400 REAL passengers from DATA/airline/clean_with_tags.parquet
+[2025-11-01T20:16:02.418899] [INFO] Building embeddings from REAL airline features...
+[2025-11-01T20:16:02.455246] [INFO] ✓ Built 400 embeddings from REAL airline data
+[2025-11-01T20:16:02.456048] [INFO] Loaded 400 users with 15-D embeddings
+[2025-11-01T20:16:02.456458] [INFO] Performing clustering with method: kmeans
+[2025-11-01T20:16:02.456813] [INFO] Using max_clusters: 20
+[2025-11-01T20:16:02.457138] [DEBUG] Checkpoint: clustering_start
+  checkpoint_time: 5.78s
+[2025-11-01T20:16:02.458124] [INFO] Running K-Means with n_clusters=20, n_init=50, max_iter=300
+[2025-11-01T20:16:02.908774] [DEBUG] Checkpoint: clustering_complete
+  checkpoint_time: 6.23s
+[2025-11-01T20:16:02.909087] [INFO] Clustering complete. Found 20 clusters.
+[2025-11-01T20:16:02.909555] [INFO] Computing separation metrics...
+[2025-11-01T20:16:02.914179] [INFO]   Silhouette score: 0.1144
+[2025-11-01T20:16:02.914752] [WARNING]   WARNING: Silhouette score below threshold
+[2025-11-01T20:16:02.917142] [INFO] Generating persona labels...
+[2025-11-01T20:16:02.917576] [INFO] Saving twin bank to DATA/twin_bank.json
+[2025-11-01T20:16:02.918994] [INFO]   Saved 20 twins
+[2025-11-01T20:16:02.919400] [INFO] Generating report at artifacts/clustering_report.md
+[2025-11-01T20:16:02.920202] [INFO]   Report saved
+[2025-11-01T20:16:02.922089] [INFO] ✅ Clustering pipeline complete!
